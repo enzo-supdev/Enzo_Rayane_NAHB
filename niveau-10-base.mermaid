@@ -1,0 +1,88 @@
+classDiagram
+    %% ========================================
+    %% NIVEAU 10/20 - FONCTIONNALITÉS DE BASE
+    %% ========================================
+    
+    %% Classe User - Gestion des utilisateurs
+    class User {
+        +String id
+        +String pseudo
+        +String email
+        +String passwordHash
+        +String role (author/reader/admin)
+        +Date createdAt
+        +Boolean isBanned
+        +register()
+        +login()
+        +logout()
+        +updateProfile()
+    }
+    
+    %% Classe Story - Gestion des histoires
+    class Story {
+        +String id
+        +String title
+        +String description
+        +String[] tags
+        +String status (draft/published)
+        +String authorId
+        +String startPageId
+        +Date createdAt
+        +Date updatedAt
+        +create()
+        +update()
+        +delete()
+        +publish()
+        +setStartPage()
+    }
+    
+    %% Classe Page - Pages/Scènes de l'histoire
+    class Page {
+        +String id
+        +String storyId
+        +String content
+        +Boolean isEnd
+        +Int order
+        +Date createdAt
+        +create()
+        +update()
+        +delete()
+    }
+    
+    %% Classe Choice - Choix disponibles sur une page
+    class Choice {
+        +String id
+        +String pageId
+        +String text
+        +String targetPageId
+        +Int order
+        +create()
+        +update()
+        +delete()
+    }
+    
+    %% Classe GameSession - Enregistrement des parties
+    class GameSession {
+        +String id
+        +String userId
+        +String storyId
+        +String endPageId
+        +Date playedAt
+        +saveSession()
+    }
+    
+    %% Relations de base
+    User "1" --> "*" Story : crée/possède
+    Story "1" --> "*" Page : contient
+    Story "1" --> "1" Page : startPage
+    Page "1" --> "*" Choice : propose
+    Choice "*" --> "1" Page : pointeVers
+    GameSession "*" --> "1" User : jouéPar
+    GameSession "*" --> "1" Story : concerneHistoire
+    GameSession "*" --> "1" Page : finAtteinte
+
+    note for User "Fichier: models/User.js\nRoutes: routes/auth.js"
+    note for Story "Fichier: models/Story.js\nRoutes: routes/stories.js"
+    note for Page "Fichier: models/Page.js\nRoutes: routes/pages.js"
+    note for Choice "Fichier: models/Choice.js"
+    note for GameSession "Fichier: models/GameSession.js\nRoutes: routes/game.js"

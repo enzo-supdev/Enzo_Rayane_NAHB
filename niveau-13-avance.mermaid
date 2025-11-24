@@ -1,0 +1,132 @@
+classDiagram
+    %% ========================================
+    %% NIVEAU 13/20 - FONCTIONNALITÉS AVANCÉES
+    %% ========================================
+    %% Ce niveau AJOUTE aux classes du niveau 10/20
+    
+    %% MODIFICATIONS des classes existantes
+    class User {
+        +String id
+        +String pseudo
+        +String email
+        +String passwordHash
+        +String role (author/reader/admin)
+        +Date createdAt
+        +Boolean isBanned
+    }
+    
+    class Story {
+        +String id
+        +String title
+        +String description
+        +String[] tags
+        +String theme (NOUVEAU)
+        +String status (draft/published/suspended)
+        +String authorId
+        +String startPageId
+        +Date createdAt
+        +Date updatedAt
+        +Float averageRating (NOUVEAU)
+        +Int totalRatings (NOUVEAU)
+    }
+    
+    class Page {
+        +String id
+        +String storyId
+        +String content
+        +Boolean isEnd
+        +String endLabel (NOUVEAU - "Fin héroïque", etc.)
+        +Int order
+        +Date createdAt
+    }
+    
+    class GameSession {
+        +String id
+        +String userId
+        +String storyId
+        +String endPageId
+        +String[] pathTaken (NOUVEAU - IDs des pages visitées)
+        +String status (NOUVEAU - completed/abandoned/in_progress)
+        +Date playedAt
+        +Date lastUpdatedAt (NOUVEAU)
+    }
+    
+    %% NOUVELLES CLASSES
+    
+    %% Classe Rating - Notation des histoires
+    class Rating {
+        +String id
+        +String userId
+        +String storyId
+        +Int rating (1-5)
+        +String comment
+        +Date createdAt
+        +Date updatedAt
+        +create()
+        +update()
+        +delete()
+    }
+    
+    %% Classe Report - Signalement d'histoires
+    class Report {
+        +String id
+        +String userId
+        +String storyId
+        +String reason
+        +String description
+        +String status (pending/reviewed/resolved)
+        +Date createdAt
+        +create()
+        +review()
+    }
+    
+    %% Classe UnlockedEnding - Collection des fins débloquées
+    class UnlockedEnding {
+        +String id
+        +String userId
+        +String storyId
+        +String pageId
+        +Date unlockedAt
+        +unlock()
+    }
+    
+    %% Classe Statistics - Statistiques globales
+    class Statistics {
+        +String id
+        +String storyId
+        +String pageId (nullable)
+        +Int totalPlays
+        +Int timesReached
+        +Float completionRate
+        +calculateStats()
+        +getPathDistribution()
+    }
+    
+    %% Relations existantes (du niveau 10/20)
+    User "1" --> "*" Story : crée
+    Story "1" --> "*" Page : contient
+    Story "1" --> "1" Page : startPage
+    Page "1" --> "*" Choice : propose
+    Choice "*" --> "1" Page : pointeVers
+    GameSession "*" --> "1" User : jouéPar
+    GameSession "*" --> "1" Story : concerne
+    GameSession "*" --> "1" Page : finAtteinte
+    
+    %% Nouvelles relations (niveau 13/20)
+    User "1" --> "*" Rating : note
+    Story "1" --> "*" Rating : estNotéePar
+    User "1" --> "*" Report : signale
+    Story "1" --> "*" Report : estSignaléePar
+    User "1" --> "*" UnlockedEnding : débloque
+    Story "1" --> "*" UnlockedEnding : aDesFins
+    Page "1" --> "*" UnlockedEnding : finDébloquée
+    Story "1" --> "1" Statistics : aDesStats
+    Page "1" --> "0..1" Statistics : statsParFin
+
+    note for Rating "Fichier: models/Rating.js\nRoutes: routes/ratings.js"
+    note for Report "Fichier: models/Report.js\nRoutes: routes/reports.js\n(Admin uniquement)"
+    note for UnlockedEnding "Fichier: models/UnlockedEnding.js\nRoutes: routes/endings.js"
+    note for Statistics "Fichier: models/Statistics.js\nRoutes: routes/statistics.js"
+    note for Story "MODIFIÉ: ajout de theme,\naverageRating, totalRatings,\nstatus peut être 'suspended'"
+    note for Page "MODIFIÉ: ajout de endLabel\npour nommer les fins"
+    note for GameSession "MODIFIÉ: ajout de pathTaken,\nstatus, lastUpdatedAt pour\nsauvegarde automatique"

@@ -1,0 +1,213 @@
+classDiagram
+    %% ========================================
+    %% NIVEAU 18/20 - QUALITÉ LOGICIELLE MAXIMALE
+    %% ========================================
+    %% Ce niveau AJOUTE les fonctionnalités les plus avancées
+    
+    %% MODIFICATIONS des classes existantes
+    class Page {
+        +String id
+        +String storyId
+        +String content
+        +String imageUrl
+        +Map~String, String~ interactiveZones (NOUVEAU - zones cliquables)
+        +Boolean isEnd
+        +String endLabel
+        +Int order
+        +Date createdAt
+    }
+    
+    class Choice {
+        +String id
+        +String pageId
+        +String text
+        +String targetPageId
+        +DiceRoll requiredRoll (NOUVEAU - null si pas de jet)
+        +Int order
+        +String zoneId (NOUVEAU - null si pas interactive)
+    }
+    
+    class GameSession {
+        +String id
+        +String userId
+        +String storyId
+        +String currentPageId
+        +String endPageId
+        +String[] pathTaken
+        +DiceRoll[] diceRolls (NOUVEAU)
+        +String status
+        +Date playedAt
+        +Date lastUpdatedAt
+    }
+    
+    %% NOUVELLES CLASSES
+    
+    %% Classe StoryTree - Représentation de l'arbre de l'histoire
+    class StoryTree {
+        +String id
+        +String storyId
+        +TreeNode rootNode
+        +Date generatedAt
+        +generateTree()
+        +getNodeById()
+        +validateTree()
+        +findDeadEnds()
+        +findOrphanPages()
+    }
+    
+    %% Classe TreeNode - Nœud de l'arbre
+    class TreeNode {
+        +String pageId
+        +String content
+        +Boolean isEnd
+        +String endLabel
+        +TreeNode[] children
+        +Choice[] choices
+        +Int depth
+        +addChild()
+        +removeChild()
+        +isReachable()
+    }
+    
+    %% Classe PlayerJourney - Parcours détaillé du joueur
+    class PlayerJourney {
+        +String id
+        +String userId
+        +String storyId
+        +String gameSessionId
+        +JourneyStep[] steps
+        +Date startedAt
+        +Date completedAt
+        +visualizeJourney()
+        +compareWithOthers()
+        +exportJourney()
+    }
+    
+    %% Classe JourneyStep - Étape du parcours
+    class JourneyStep {
+        +String pageId
+        +String choiceId
+        +DiceRoll diceRoll
+        +Date timestamp
+        +Int order
+    }
+    
+    %% Classe InteractiveZone - Zone cliquable sur image
+    class InteractiveZone {
+        +String id
+        +String pageId
+        +String zoneId
+        +Coordinates coordinates
+        +String shape (rect/circle/polygon)
+        +String targetPageId
+        +String tooltip
+        +create()
+        +update()
+        +delete()
+    }
+    
+    %% Classe Coordinates - Coordonnées d'une zone
+    class Coordinates {
+        +Int x
+        +Int y
+        +Int width
+        +Int height
+        +Int radius
+        +Point[] polygonPoints
+    }
+    
+    %% Classe DiceRoll - Système de jets de dés
+    class DiceRoll {
+        +String id
+        +String type (d6/d20/d100)
+        +Int requiredValue
+        +String condition (>=/<=/==/>/< )
+        +Int rolledValue
+        +Boolean success
+        +Date rolledAt
+        +roll()
+        +checkSuccess()
+    }
+    
+    %% Classe DiceChoice - Choix avec condition de dé
+    class DiceChoice {
+        +String id
+        +String choiceId
+        +DiceRoll requiredRoll
+        +String successPageId
+        +String failurePageId
+        +String description
+        +create()
+        +evaluate()
+    }
+    
+    %% Classe TreeVisualization - Visualisation de l'arbre
+    class TreeVisualization {
+        +String id
+        +String storyId
+        +String svgData
+        +String format (svg/json/mermaid)
+        +Date generatedAt
+        +generate()
+        +export()
+        +highlightPath()
+    }
+    
+    %% Classe PathAnalysis - Analyse des chemins
+    class PathAnalysis {
+        +String id
+        +String storyId
+        +Map~String, Float~ pathPopularity
+        +String[] mostCommonPaths
+        +String[] leastCommonPaths
+        +String[] criticalNodes
+        +analyze()
+        +compareUserPath()
+    }
+    
+    %% Relations existantes (tous les niveaux précédents)
+    User "1" --> "*" Story : crée
+    Story "1" --> "*" Page : contient
+    Story "1" --> "1" Page : startPage
+    Page "1" --> "*" Choice : propose
+    Choice "*" --> "1" Page : pointeVers
+    GameSession "*" --> "1" User : jouéPar
+    GameSession "*" --> "1" Story : concerne
+    
+    %% Nouvelles relations (niveau 18/20)
+    Story "1" --> "1" StoryTree : possèdeArbre
+    StoryTree "1" --> "1" TreeNode : rootNode
+    TreeNode "1" --> "*" TreeNode : children
+    TreeNode "1" --> "*" Choice : choices
+    
+    GameSession "1" --> "1" PlayerJourney : possèdeParcours
+    PlayerJourney "1" --> "*" JourneyStep : steps
+    JourneyStep "*" --> "1" Page : visitedPage
+    JourneyStep "0..1" --> "1" Choice : choiceMade
+    JourneyStep "0..1" --> "1" DiceRoll : diceRoll
+    
+    Page "1" --> "*" InteractiveZone : zonesInteractives
+    InteractiveZone "1" --> "1" Coordinates : coordinates
+    InteractiveZone "*" --> "1" Page : targetPage
+    Choice "0..1" --> "1" InteractiveZone : zoneLinked
+    
+    Choice "0..1" --> "1" DiceChoice : avecDé
+    DiceChoice "1" --> "1" DiceRoll : requireRoll
+    DiceChoice "*" --> "1" Page : successPage
+    DiceChoice "*" --> "1" Page : failurePage
+    
+    Story "1" --> "1" TreeVisualization : visualization
+    Story "1" --> "1" PathAnalysis : pathAnalysis
+    PlayerJourney "*" --> "1" PathAnalysis : analysedBy
+
+    note for StoryTree "Fichier: models/StoryTree.js\nRoutes: routes/tree.js\nGénéré à la demande ou cached"
+    note for TreeNode "Fichier: models/TreeNode.js\nStructure récursive pour\nreprésenter l'arbre"
+    note for PlayerJourney "Fichier: models/PlayerJourney.js\nRoutes: routes/journey.js\nVisualisation du parcours"
+    note for InteractiveZone "Fichier: models/InteractiveZone.js\nRoutes: routes/interactive.js\nZones cliquables sur images"
+    note for DiceRoll "Fichier: models/DiceRoll.js\nRoutes: routes/dice.js\nSystème de hasard"
+    note for DiceChoice "Fichier: models/DiceChoice.js\nChoix conditionnels avec dés"
+    note for TreeVisualization "Fichier: models/TreeVisualization.js\nExport SVG/JSON de l'arbre"
+    note for PathAnalysis "Fichier: models/PathAnalysis.js\nAnalyse des chemins populaires"
+    note for Page "MODIFIÉ: ajout de\ninteractiveZones pour zones\ncliquables"
+    note for Choice "MODIFIÉ: ajout de requiredRoll\net zoneId pour système de dés\net zones interactives"
+    note for GameSession "MODIFIÉ: ajout de diceRolls\npour historique des jets"

@@ -1,0 +1,154 @@
+classDiagram
+    %% ========================================
+    %% NIVEAU 16/20 - CÔTÉ AUTEUR ET UX/UI
+    %% ========================================
+    %% Ce niveau AJOUTE aux classes des niveaux précédents
+    
+    %% MODIFICATIONS des classes existantes
+    class User {
+        +String id
+        +String pseudo
+        +String email
+        +String passwordHash
+        +String role
+        +String avatarUrl (NOUVEAU)
+        +String bio (NOUVEAU)
+        +Date createdAt
+        +Boolean isBanned
+    }
+    
+    class Story {
+        +String id
+        +String title
+        +String description
+        +String[] tags
+        +String theme
+        +String coverImageUrl (NOUVEAU)
+        +String status (draft/published/suspended)
+        +String authorId
+        +String startPageId
+        +Date createdAt
+        +Date updatedAt
+        +Float averageRating
+        +Int totalRatings
+        +Int totalReads (NOUVEAU)
+        +Int totalCompletions (NOUVEAU)
+        +Int abandonRate (NOUVEAU)
+    }
+    
+    class Page {
+        +String id
+        +String storyId
+        +String content
+        +String imageUrl (NOUVEAU - illustrations)
+        +Boolean isEnd
+        +String endLabel
+        +Int order
+        +Date createdAt
+    }
+    
+    %% NOUVELLES CLASSES
+    
+    %% Classe AuthorProfile - Profil détaillé de l'auteur
+    class AuthorProfile {
+        +String id
+        +String userId
+        +Int totalStories
+        +Int totalReads
+        +Float averageRating
+        +Int totalFollowers (NOUVEAU)
+        +Date memberSince
+        +getStatistics()
+        +getStoryPerformance()
+    }
+    
+    %% Classe StoryStatistics - Statistiques avancées par histoire
+    class StoryStatistics {
+        +String id
+        +String storyId
+        +Int totalReads
+        +Int totalCompletions
+        +Int totalAbandoned
+        +Float completionRate
+        +Map~String, Int~ endingDistribution
+        +Map~String, Int~ choiceDistribution
+        +Date lastUpdated
+        +calculateAdvancedStats()
+        +getPopularPaths()
+        +getAbandonmentPoints()
+    }
+    
+    %% Classe PreviewSession - Sessions de test pour auteurs
+    class PreviewSession {
+        +String id
+        +String authorId
+        +String storyId
+        +String currentPageId
+        +String[] pathTaken
+        +Date startedAt
+        +Boolean isPreview
+        +startPreview()
+        +continuePreview()
+        +endPreview()
+    }
+    
+    %% Classe Image - Gestion des images uploadées
+    class Image {
+        +String id
+        +String uploadedBy
+        +String url
+        +String filename
+        +String mimeType
+        +Int fileSize
+        +Date uploadedAt
+        +upload()
+        +delete()
+    }
+    
+    %% Classe Notification - Notifications utilisateur
+    class Notification {
+        +String id
+        +String userId
+        +String type (comment/rating/report)
+        +String message
+        +String relatedId
+        +Boolean isRead
+        +Date createdAt
+        +markAsRead()
+        +delete()
+    }
+    
+    %% Relations existantes (niveaux précédents)
+    User "1" --> "*" Story : crée
+    Story "1" --> "*" Page : contient
+    Story "1" --> "1" Page : startPage
+    Page "1" --> "*" Choice : propose
+    Choice "*" --> "1" Page : pointeVers
+    GameSession "*" --> "1" User : jouéPar
+    GameSession "*" --> "1" Story : concerne
+    User "1" --> "*" Rating : note
+    Story "1" --> "*" Rating : estNotée
+    User "1" --> "*" Report : signale
+    Story "1" --> "*" Report : estSignalée
+    User "1" --> "*" UnlockedEnding : débloque
+    
+    %% Nouvelles relations (niveau 16/20)
+    User "1" --> "1" AuthorProfile : possède
+    Story "1" --> "1" StoryStatistics : aDesStatsAvancées
+    User "1" --> "*" PreviewSession : teste
+    PreviewSession "*" --> "1" Story : concerneHistoire
+    User "1" --> "*" Image : uploade
+    Story "0..1" --> "1" Image : coverImage
+    Page "0..1" --> "1" Image : illustration
+    User "1" --> "*" Notification : reçoit
+    Rating "1" --> "0..1" Notification : génère
+    Report "1" --> "0..1" Notification : génère
+
+    note for AuthorProfile "Fichier: models/AuthorProfile.js\nRoutes: routes/authors.js\nVue auteur avec dashboard"
+    note for StoryStatistics "Fichier: models/StoryStatistics.js\nCalculées périodiquement\nou à la demande"
+    note for PreviewSession "Fichier: models/PreviewSession.js\nRoutes: routes/preview.js\nNe pollue pas les vraies stats"
+    note for Image "Fichier: models/Image.js\nRoutes: routes/upload.js\nUtiliser multer pour upload"
+    note for Notification "Fichier: models/Notification.js\nRoutes: routes/notifications.js\nWebSocket pour temps réel"
+    note for Story "MODIFIÉ: ajout de coverImageUrl,\ntotalReads, totalCompletions,\nabandonRate"
+    note for Page "MODIFIÉ: ajout de imageUrl\npour les illustrations"
+    note for User "MODIFIÉ: ajout de avatarUrl\net bio pour profil"

@@ -1,0 +1,4 @@
+-Diagram de class
+-maquette et accécibilité des pages
+-diagram de séquence
+-diagram d'architecture
