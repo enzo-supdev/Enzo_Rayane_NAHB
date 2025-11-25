@@ -4,15 +4,15 @@ classDiagram
     %% ========================================
     %% Ce niveau AJOUTE aux classes des niveaux précédents
     
-    %% MODIFICATIONS des classes existantes
+    %% CLASSES DES NIVEAUX PRÉCÉDENTS
     class User {
         +String id
         +String pseudo
         +String email
         +String passwordHash
         +String role
-        +String avatarUrl (NOUVEAU)
-        +String bio (NOUVEAU)
+        +String avatarUrl
+        +String bio
         +Date createdAt
         +Boolean isBanned
     }
@@ -23,46 +23,88 @@ classDiagram
         +String description
         +String[] tags
         +String theme
-        +String coverImageUrl (NOUVEAU)
-        +String status (draft/published/suspended)
+        +String coverImageUrl
+        +String status
         +String authorId
         +String startPageId
         +Date createdAt
         +Date updatedAt
         +Float averageRating
         +Int totalRatings
-        +Int totalReads (NOUVEAU)
-        +Int totalCompletions (NOUVEAU)
-        +Int abandonRate (NOUVEAU)
+        +Int totalReads
+        +Int totalCompletions
+        +Int abandonRate
     }
     
     class Page {
         +String id
         +String storyId
         +String content
-        +String imageUrl (NOUVEAU - illustrations)
+        +String imageUrl
         +Boolean isEnd
         +String endLabel
         +Int order
         +Date createdAt
     }
     
-    %% NOUVELLES CLASSES
+    class Choice {
+        +String id
+        +String pageId
+        +String text
+        +String targetPageId
+        +Int order
+    }
     
-    %% Classe AuthorProfile - Profil détaillé de l'auteur
+    class GameSession {
+        +String id
+        +String userId
+        +String storyId
+        +String endPageId
+        +String[] pathTaken
+        +String status
+        +Date playedAt
+    }
+    
+    class Rating {
+        +String id
+        +String userId
+        +String storyId
+        +Int rating
+        +String comment
+        +Date createdAt
+    }
+    
+    class Report {
+        +String id
+        +String userId
+        +String storyId
+        +String reason
+        +String status
+        +Date createdAt
+    }
+    
+    class UnlockedEnding {
+        +String id
+        +String userId
+        +String storyId
+        +String pageId
+        +Date unlockedAt
+    }
+    
+    %% NOUVELLES CLASSES NIVEAU 16
+    
     class AuthorProfile {
         +String id
         +String userId
         +Int totalStories
         +Int totalReads
         +Float averageRating
-        +Int totalFollowers (NOUVEAU)
+        +Int totalFollowers
         +Date memberSince
         +getStatistics()
         +getStoryPerformance()
     }
     
-    %% Classe StoryStatistics - Statistiques avancées par histoire
     class StoryStatistics {
         +String id
         +String storyId
@@ -70,21 +112,17 @@ classDiagram
         +Int totalCompletions
         +Int totalAbandoned
         +Float completionRate
-        +Map~String, Int~ endingDistribution
-        +Map~String, Int~ choiceDistribution
         +Date lastUpdated
         +calculateAdvancedStats()
         +getPopularPaths()
         +getAbandonmentPoints()
     }
     
-    %% Classe PreviewSession - Sessions de test pour auteurs
     class PreviewSession {
         +String id
         +String authorId
         +String storyId
         +String currentPageId
-        +String[] pathTaken
         +Date startedAt
         +Boolean isPreview
         +startPreview()
@@ -92,7 +130,6 @@ classDiagram
         +endPreview()
     }
     
-    %% Classe Image - Gestion des images uploadées
     class Image {
         +String id
         +String uploadedBy
@@ -105,11 +142,10 @@ classDiagram
         +delete()
     }
     
-    %% Classe Notification - Notifications utilisateur
     class Notification {
         +String id
         +String userId
-        +String type (comment/rating/report)
+        +String type
         +String message
         +String relatedId
         +Boolean isRead
@@ -118,7 +154,7 @@ classDiagram
         +delete()
     }
     
-    %% Relations existantes (niveaux précédents)
+    %% RELATIONS
     User "1" --> "*" Story : crée
     Story "1" --> "*" Page : contient
     Story "1" --> "1" Page : startPage
@@ -131,24 +167,13 @@ classDiagram
     User "1" --> "*" Report : signale
     Story "1" --> "*" Report : estSignalée
     User "1" --> "*" UnlockedEnding : débloque
-    
-    %% Nouvelles relations (niveau 16/20)
     User "1" --> "1" AuthorProfile : possède
-    Story "1" --> "1" StoryStatistics : aDesStatsAvancées
+    Story "1" --> "1" StoryStatistics : aDesStats
     User "1" --> "*" PreviewSession : teste
-    PreviewSession "*" --> "1" Story : concerneHistoire
+    PreviewSession "*" --> "1" Story : concerne
     User "1" --> "*" Image : uploade
     Story "0..1" --> "1" Image : coverImage
     Page "0..1" --> "1" Image : illustration
     User "1" --> "*" Notification : reçoit
     Rating "1" --> "0..1" Notification : génère
     Report "1" --> "0..1" Notification : génère
-
-    note for AuthorProfile "Fichier: models/AuthorProfile.js\nRoutes: routes/authors.js\nVue auteur avec dashboard"
-    note for StoryStatistics "Fichier: models/StoryStatistics.js\nCalculées périodiquement\nou à la demande"
-    note for PreviewSession "Fichier: models/PreviewSession.js\nRoutes: routes/preview.js\nNe pollue pas les vraies stats"
-    note for Image "Fichier: models/Image.js\nRoutes: routes/upload.js\nUtiliser multer pour upload"
-    note for Notification "Fichier: models/Notification.js\nRoutes: routes/notifications.js\nWebSocket pour temps réel"
-    note for Story "MODIFIÉ: ajout de coverImageUrl,\ntotalReads, totalCompletions,\nabandonRate"
-    note for Page "MODIFIÉ: ajout de imageUrl\npour les illustrations"
-    note for User "MODIFIÉ: ajout de avatarUrl\net bio pour profil"

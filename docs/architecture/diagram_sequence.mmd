@@ -1,0 +1,29 @@
+sequenceDiagram
+    participant U as Utilisateur
+    participant F as Frontend (React)
+    participant A as API Backend
+    participant DB as Base de données
+
+    U->>F: Remplit formulaire d'inscription
+    U->>F: Clique sur "S'inscrire"
+    
+    F->>F: Valide les données côté client
+    alt Validation échouée
+        F->>U: Affiche erreurs de validation
+    else Validation réussie
+        F->>A: POST /api/auth/register<br/>{pseudo, email, password}
+        
+        A->>A: Valide les données
+        alt Email ou pseudo déjà utilisé
+            A->>F: 409 Conflict<br/>{error: "Email déjà utilisé"}
+            F->>U: Affiche message d'erreur
+        else Données valides
+            A->>A: Hash du mot de passe (bcrypt)
+            A->>DB: INSERT INTO users
+            DB->>A: Utilisateur créé
+            A->>A: Génère token JWT
+            A->>F: 201 Created<br/>{user, token}
+            F->>F: Stocke token (localStorage)
+            F->>U: Redirection vers dashboard
+        end
+    end
