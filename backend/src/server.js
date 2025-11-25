@@ -20,6 +20,11 @@ app.get('/api/health', (req, res) => {
 
 // Routes
 app.use('/api/auth', require('./routes/auth'));
+app.use('/api/stories', require('./routes/stories'));
+app.use('/api/pages', require('./routes/pages')); 
+app.use('/api/choices', require('./routes/choices'));
+app.use('/api/game', require('./routes/game'));     
+app.use('/api/admin', require('./routes/admin'));
 
 // Gestionnaire d'erreurs (doit être après les routes)
 app.use(errorHandler);
