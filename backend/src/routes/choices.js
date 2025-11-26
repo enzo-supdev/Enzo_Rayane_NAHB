@@ -1,19 +1,16 @@
 const express = require('express');
 const router = express.Router();
-const choiceController = require('../controllers/choiceController');
+const pageController = require('../controllers/pageController');
 const auth = require('../middleware/auth');
 const roleCheck = require('../middleware/roleCheck');
 
-// GET /api/choices/page/:pageId - Choix d'une page
-router.get('/page/:pageId', auth, choiceController.getChoicesByPage);
-
 // POST /api/choices - Créer un choix
-router.post('/', auth, roleCheck('author', 'admin'), choiceController.createChoice);
+router.post('/', auth, roleCheck('author', 'admin'), pageController.createChoice);
 
 // PUT /api/choices/:id - Mettre à jour un choix
-router.put('/:id', auth, roleCheck('author', 'admin'), choiceController.updateChoice);
+router.put('/:id', auth, roleCheck('author', 'admin'), pageController.updateChoice);
 
 // DELETE /api/choices/:id - Supprimer un choix
-router.delete('/:id', auth, roleCheck('author', 'admin'), choiceController.deleteChoice);
+router.delete('/:id', auth, roleCheck('author', 'admin'), pageController.deleteChoice);
 
 module.exports = router;

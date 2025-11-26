@@ -4,20 +4,30 @@ const adminController = require('../controllers/adminController');
 const auth = require('../middleware/auth');
 const roleCheck = require('../middleware/roleCheck');
 
-// Toutes les routes nécessitent le rôle admin
-router.use(auth);
-router.use(roleCheck('admin'));
+// Toutes les routes admin nécessitent le rôle 'admin'
 
-// POST /api/admin/users/:userId/ban - Bannir un utilisateur
-router.post('/users/:userId/ban', adminController.banUser);
+// Gestion des utilisateurs
+// POST /api/admin/users/:id/ban - Bannir un utilisateur
+router.post('/users/:id/ban', auth, roleCheck('admin'), adminController.banUser);
 
-// POST /api/admin/users/:userId/unban - Débannir un utilisateur
-router.post('/users/:userId/unban', adminController.unbanUser);
+// POST /api/admin/users/:id/unban - Débannir un utilisateur
+router.post('/users/:id/unban', auth, roleCheck('admin'), adminController.unbanUser);
 
-// POST /api/admin/stories/:storyId/suspend - Suspendre une histoire
-router.post('/stories/:storyId/suspend', adminController.suspendStory);
+// GET /api/admin/users - Récupérer tous les utilisateurs
+router.get('/users', auth, roleCheck('admin'), adminController.getAllUsers);
 
+// Gestion des histoires
+// POST /api/admin/stories/:id/suspend - Suspendre une histoire
+router.post('/stories/:id/suspend', auth, roleCheck('admin'), adminController.suspendStory);
+
+// POST /api/admin/stories/:id/unsuspend - Réactiver une histoire
+router.post('/stories/:id/unsuspend', auth, roleCheck('admin'), adminController.unsuspendStory);
+
+// GET /api/admin/stories - Récupérer toutes les histoires
+router.get('/stories', auth, roleCheck('admin'), adminController.getAllStories);
+
+// Statistiques
 // GET /api/admin/stats - Statistiques globales
-router.get('/stats', adminController.getGlobalStats);
+router.get('/stats', auth, roleCheck('admin'), adminController.getGlobalStats);
 
 module.exports = router;

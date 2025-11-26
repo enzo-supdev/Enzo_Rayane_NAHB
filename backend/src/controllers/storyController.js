@@ -1,89 +1,97 @@
 const { PrismaClient } = require('@prisma/client');
 const prisma = new PrismaClient();
 
-// Créer une histoire
-exports.createStory = async (req, res) => {
-  try {
-    const { title, description, tags } = req.body;
-
-    const story = await prisma.story.create({
-      data: {
-        title,
-        description,
-        tags: tags ? JSON.stringify(tags) : null,
-        authorId: req.userId,
-        status: 'DRAFT'
-      }
-    });
-
-    res.status(201).json({
-      message: 'Histoire créée avec succès',
-      story
-    });
-  } catch (error) {
-    console.error('Erreur createStory:', error);
-    res.status(500).json({ 
-      message: 'Erreur lors de la création de l\'histoire', 
-      error: error.message 
-    });
-  }
-};
-
-// Récupérer toutes les histoires publiées (pour lecteurs)
+/**
+ * Récupérer toutes les histoires publiées
+ * GET /api/stories
+ */
 exports.getPublishedStories = async (req, res) => {
   try {
-    const { search } = req.query;
-    
-    const where = { status: 'PUBLISHED' };
-    
-    // Recherche par titre
+    const { search, theme, sortBy = 'createdAt', order = 'desc' } = req.query;
+
+    // Construction de la clause where
+    const where = {
+      status: 'published'
+    };
+
+    // Recherche par titre ou description
     if (search) {
-      where.title = { contains: search };
+      where.OR = [
+        { title: { contains: search, mode: 'insensitive' } },
+        { description: { contains: search, mode: 'insensitive' } }
+      ];
+    }
+
+    // Filtrer par thème
+    if (theme) {
+      where.theme = theme;
     }
 
     const stories = await prisma.story.findMany({
       where,
       include: {
-        author: { select: { pseudo: true } }
+        author: {
+          select: {
+            id: true,
+            pseudo: true,
+            avatarUrl: true
+          }
+        },
+        _count: {
+          select: {
+            pages: true,
+            gameSessions: true,
+            ratings: true
+          }
+        }
       },
-      orderBy: { createdAt: 'desc' }
+      orderBy: {
+        [sortBy]: order
+      }
     });
 
-    // Parser les tags depuis JSON pour chaque histoire
-    const storiesWithParsedTags = stories.map(story => ({
-      ...story,
-      tags: story.tags ? JSON.parse(story.tags) : []
-    }));
+    // Calculer la note moyenne pour chaque histoire
+    const storiesWithRatings = await Promise.all(
+      stories.map(async (story) => {
+        const ratings = await prisma.rating.findMany({
+          where: { storyId: story.id },
+          select: { rating: true }
+        });
 
-    res.json({ stories: storiesWithParsedTags });
+        const averageRating = ratings.length > 0
+          ? ratings.reduce((sum, r) => sum + r.rating, 0) / ratings.length
+          : 0;
+
+        return {
+          ...story,
+          averageRating: Math.round(averageRating * 10) / 10,
+          totalRatings: ratings.length
+        };
+      })
+    );
+
+    res.status(200).json({
+      success: true,
+      data: {
+        stories: storiesWithRatings,
+        count: storiesWithRatings.length
+      }
+    });
+
   } catch (error) {
     console.error('Erreur getPublishedStories:', error);
-    res.status(500).json({ 
-      message: 'Erreur lors de la récupération des histoires', 
-      error: error.message 
+    res.status(500).json({
+      success: false,
+      message: 'Erreur lors de la récupération des histoires',
+      error: error.message
     });
   }
 };
 
-// Récupérer les histoires de l'auteur connecté
-exports.getMyStories = async (req, res) => {
-  try {
-    const stories = await prisma.story.findMany({
-      where: { authorId: req.userId },
-      orderBy: { updatedAt: 'desc' }
-    });
-
-    res.json({ stories });
-  } catch (error) {
-    console.error('Erreur getMyStories:', error);
-    res.status(500).json({ 
-      message: 'Erreur lors de la récupération de vos histoires', 
-      error: error.message 
-    });
-  }
-};
-
-// Récupérer une histoire par ID
+/**
+ * Récupérer une histoire par ID
+ * GET /api/stories/:id
+ */
 exports.getStoryById = async (req, res) => {
   try {
     const { id } = req.params;
@@ -91,163 +99,372 @@ exports.getStoryById = async (req, res) => {
     const story = await prisma.story.findUnique({
       where: { id },
       include: {
-        author: { select: { pseudo: true, email: true } }
+        author: {
+          select: {
+            id: true,
+            pseudo: true,
+            avatarUrl: true,
+            bio: true
+          }
+        },
+        pages: {
+          include: {
+            choices: {
+              include: {
+                targetPage: {
+                  select: {
+                    id: true,
+                    title: true
+                  }
+                }
+              }
+            }
+          }
+        },
+        _count: {
+          select: {
+            gameSessions: true,
+            ratings: true
+          }
+        }
       }
     });
 
     if (!story) {
-      return res.status(404).json({ 
-        message: 'Histoire non trouvée' 
+      return res.status(404).json({
+        success: false,
+        message: 'Histoire non trouvée'
       });
     }
 
     // Vérifier les permissions
-    if (story.status === 'DRAFT' && story.authorId !== req.userId) {
-      return res.status(403).json({ 
-        message: 'Accès non autorisé' 
+    if (story.status === 'draft' && story.authorId !== req.user.userId && req.user.role !== 'admin') {
+      return res.status(403).json({
+        success: false,
+        message: 'Vous n\'avez pas accès à cette histoire'
       });
     }
 
-    res.json({ story });
+    // Calculer la note moyenne
+    const ratings = await prisma.rating.findMany({
+      where: { storyId: story.id },
+      select: { rating: true }
+    });
+
+    const averageRating = ratings.length > 0
+      ? ratings.reduce((sum, r) => sum + r.rating, 0) / ratings.length
+      : 0;
+
+    res.status(200).json({
+      success: true,
+      data: {
+        story: {
+          ...story,
+          averageRating: Math.round(averageRating * 10) / 10,
+          totalRatings: ratings.length
+        }
+      }
+    });
+
   } catch (error) {
     console.error('Erreur getStoryById:', error);
-    res.status(500).json({ 
-      message: 'Erreur lors de la récupération de l\'histoire', 
-      error: error.message 
+    res.status(500).json({
+      success: false,
+      message: 'Erreur lors de la récupération de l\'histoire',
+      error: error.message
     });
   }
 };
 
-// Mettre à jour une histoire
+/**
+ * Récupérer les histoires de l'auteur connecté
+ * GET /api/stories/my/stories
+ */
+exports.getMyStories = async (req, res) => {
+  try {
+    const stories = await prisma.story.findMany({
+      where: {
+        authorId: req.user.userId
+      },
+      include: {
+        _count: {
+          select: {
+            pages: true,
+            gameSessions: true,
+            ratings: true
+          }
+        }
+      },
+      orderBy: {
+        updatedAt: 'desc'
+      }
+    });
+
+    // Ajouter les statistiques
+    const storiesWithStats = await Promise.all(
+      stories.map(async (story) => {
+        const ratings = await prisma.rating.findMany({
+          where: { storyId: story.id },
+          select: { rating: true }
+        });
+
+        const averageRating = ratings.length > 0
+          ? ratings.reduce((sum, r) => sum + r.rating, 0) / ratings.length
+          : 0;
+
+        return {
+          ...story,
+          averageRating: Math.round(averageRating * 10) / 10,
+          totalRatings: ratings.length
+        };
+      })
+    );
+
+    res.status(200).json({
+      success: true,
+      data: {
+        stories: storiesWithStats,
+        count: storiesWithStats.length
+      }
+    });
+
+  } catch (error) {
+    console.error('Erreur getMyStories:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Erreur lors de la récupération de vos histoires',
+      error: error.message
+    });
+  }
+};
+
+/**
+ * Créer une nouvelle histoire
+ * POST /api/stories
+ */
+exports.createStory = async (req, res) => {
+  try {
+    const { title, description, tags, theme } = req.body;
+
+    // Validation
+    if (!title || !description) {
+      return res.status(400).json({
+        success: false,
+        message: 'Titre et description requis'
+      });
+    }
+
+    const story = await prisma.story.create({
+      data: {
+        title,
+        description,
+        tags: tags || [],
+        theme: theme || null,
+        status: 'draft', // Par défaut en brouillon
+        authorId: req.user.userId
+      },
+      include: {
+        author: {
+          select: {
+            id: true,
+            pseudo: true
+          }
+        }
+      }
+    });
+
+    res.status(201).json({
+      success: true,
+      message: 'Histoire créée avec succès',
+      data: { story }
+    });
+
+  } catch (error) {
+    console.error('Erreur createStory:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Erreur lors de la création de l\'histoire',
+      error: error.message
+    });
+  }
+};
+
+/**
+ * Mettre à jour une histoire
+ * PUT /api/stories/:id
+ */
 exports.updateStory = async (req, res) => {
   try {
     const { id } = req.params;
-    const { title, description, tags, status, startPageId } = req.body;
+    const { title, description, tags, theme, startPageId } = req.body;
 
+    // Vérifier que l'histoire existe et appartient à l'utilisateur
     const story = await prisma.story.findUnique({
       where: { id }
     });
 
     if (!story) {
-      return res.status(404).json({ 
-        message: 'Histoire non trouvée' 
+      return res.status(404).json({
+        success: false,
+        message: 'Histoire non trouvée'
       });
     }
 
-    // Vérifier que l'utilisateur est bien l'auteur
-    if (story.authorId !== req.userId) {
-      return res.status(403).json({ 
-        message: 'Vous n\'êtes pas autorisé à modifier cette histoire' 
+    if (story.authorId !== req.user.userId && req.user.role !== 'admin') {
+      return res.status(403).json({
+        success: false,
+        message: 'Vous n\'avez pas la permission de modifier cette histoire'
       });
     }
-
-    const updateData = {};
-    if (title) updateData.title = title;
-    if (description) updateData.description = description;
-    if (tags) updateData.tags = JSON.stringify(tags);
-    if (status) updateData.status = status.toUpperCase();
-    if (startPageId) updateData.startPageId = startPageId;
 
     const updatedStory = await prisma.story.update({
       where: { id },
-      data: updateData
+      data: {
+        ...(title && { title }),
+        ...(description && { description }),
+        ...(tags !== undefined && { tags }),
+        ...(theme !== undefined && { theme }),
+        ...(startPageId && { startPageId })
+      },
+      include: {
+        author: {
+          select: {
+            id: true,
+            pseudo: true
+          }
+        }
+      }
     });
 
-    res.json({
-      message: 'Histoire mise à jour avec succès',
-      story: updatedStory
+    res.status(200).json({
+      success: true,
+      message: 'Histoire mise à jour',
+      data: { story: updatedStory }
     });
+
   } catch (error) {
     console.error('Erreur updateStory:', error);
-    res.status(500).json({ 
-      message: 'Erreur lors de la mise à jour de l\'histoire', 
-      error: error.message 
+    res.status(500).json({
+      success: false,
+      message: 'Erreur lors de la mise à jour de l\'histoire',
+      error: error.message
     });
   }
 };
 
-// Supprimer une histoire
+/**
+ * Supprimer une histoire
+ * DELETE /api/stories/:id
+ */
 exports.deleteStory = async (req, res) => {
   try {
     const { id } = req.params;
 
+    // Vérifier que l'histoire existe et appartient à l'utilisateur
     const story = await prisma.story.findUnique({
       where: { id }
     });
 
     if (!story) {
-      return res.status(404).json({ 
-        message: 'Histoire non trouvée' 
+      return res.status(404).json({
+        success: false,
+        message: 'Histoire non trouvée'
       });
     }
 
-    // Vérifier que l'utilisateur est bien l'auteur
-    if (story.authorId !== req.userId) {
-      return res.status(403).json({ 
-        message: 'Vous n\'êtes pas autorisé à supprimer cette histoire' 
+    if (story.authorId !== req.user.userId && req.user.role !== 'admin') {
+      return res.status(403).json({
+        success: false,
+        message: 'Vous n\'avez pas la permission de supprimer cette histoire'
       });
     }
 
-    // Suppression en cascade via Prisma (configure dans schema.prisma)
+    // Supprimer l'histoire (cascade delete sur pages/choices grâce à Prisma)
     await prisma.story.delete({
       where: { id }
     });
 
-    res.json({
+    res.status(200).json({
+      success: true,
       message: 'Histoire supprimée avec succès'
     });
+
   } catch (error) {
     console.error('Erreur deleteStory:', error);
-    res.status(500).json({ 
-      message: 'Erreur lors de la suppression de l\'histoire', 
-      error: error.message 
+    res.status(500).json({
+      success: false,
+      message: 'Erreur lors de la suppression de l\'histoire',
+      error: error.message
     });
   }
 };
 
-// Publier une histoire (passer de DRAFT à PUBLISHED)
+/**
+ * Publier une histoire (passer de draft à published)
+ * POST /api/stories/:id/publish
+ */
 exports.publishStory = async (req, res) => {
   try {
     const { id } = req.params;
 
+    // Vérifier l'histoire
     const story = await prisma.story.findUnique({
-      where: { id }
+      where: { id },
+      include: {
+        pages: true
+      }
     });
 
     if (!story) {
-      return res.status(404).json({ 
-        message: 'Histoire non trouvée' 
+      return res.status(404).json({
+        success: false,
+        message: 'Histoire non trouvée'
       });
     }
 
-    // Vérifier que l'utilisateur est bien l'auteur
-    if (story.authorId !== req.userId) {
-      return res.status(403).json({ 
-        message: 'Vous n\'êtes pas autorisé à publier cette histoire' 
+    if (story.authorId !== req.user.userId && req.user.role !== 'admin') {
+      return res.status(403).json({
+        success: false,
+        message: 'Vous n\'avez pas la permission de publier cette histoire'
       });
     }
 
-    // Vérifier qu'il y a une page de départ
+    // Vérifier qu'il y a au moins une page
+    if (story.pages.length === 0) {
+      return res.status(400).json({
+        success: false,
+        message: 'Vous devez créer au moins une page avant de publier'
+      });
+    }
+
+    // Vérifier qu'une page de départ est définie
     if (!story.startPageId) {
-      return res.status(400).json({ 
-        message: 'Veuillez définir une page de départ avant de publier' 
+      return res.status(400).json({
+        success: false,
+        message: 'Vous devez définir une page de départ avant de publier'
       });
     }
 
     const updatedStory = await prisma.story.update({
       where: { id },
-      data: { status: 'PUBLISHED' }
+      data: {
+        status: 'published',
+        publishedAt: new Date()
+      }
     });
 
-    res.json({
+    res.status(200).json({
+      success: true,
       message: 'Histoire publiée avec succès',
-      story: updatedStory
+      data: { story: updatedStory }
     });
+
   } catch (error) {
     console.error('Erreur publishStory:', error);
-    res.status(500).json({ 
-      message: 'Erreur lors de la publication de l\'histoire', 
-      error: error.message 
+    res.status(500).json({
+      success: false,
+      message: 'Erreur lors de la publication de l\'histoire',
+      error: error.message
     });
   }
 };
