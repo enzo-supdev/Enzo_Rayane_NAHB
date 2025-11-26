@@ -243,3 +243,80 @@ exports.abandonJourney = async (req, res) => {
     });
   }
 };
+
+// Enregistrer une étape du parcours (alias pour addJourneyStep)
+exports.recordJourneyStep = exports.addJourneyStep;
+
+// Récupérer le parcours d'une session de jeu
+exports.getSessionJourney = async (req, res) => {
+  try {
+    const { sessionId } = req.params;
+
+    const journey = await prisma.playerJourney.findFirst({
+      where: { gameSessionId: sessionId },
+      include: {
+        steps: {
+          include: {
+            page: { select: { content: true, isEnd: true } },
+            choice: { select: { text: true } }
+          },
+          orderBy: { stepOrder: 'asc' }
+        },
+        story: { select: { title: true } }
+      }
+    });
+
+    if (!journey) {
+      return res.status(404).json({ 
+        message: 'Parcours non trouvé pour cette session' 
+      });
+    }
+
+    res.json({ journey });
+  } catch (error) {
+    console.error('Erreur getSessionJourney:', error);
+    res.status(500).json({ 
+      message: 'Erreur lors de la récupération du parcours', 
+      error: error.message 
+    });
+  }
+};
+
+// Récupérer tous les parcours d'un utilisateur pour une histoire
+exports.getUserStoryJourneys = async (req, res) => {
+  try {
+    const { storyId, userId } = req.params;
+
+    // Vérifier que l'utilisateur demande ses propres parcours ou est admin
+    if (userId !== req.userId && req.userRole !== 'ADMIN') {
+      return res.status(403).json({ 
+        message: 'Accès non autorisé' 
+      });
+    }
+
+    const journeys = await prisma.playerJourney.findMany({
+      where: {
+        userId,
+        storyId
+      },
+      include: {
+        steps: {
+          select: { id: true, pageId: true, stepOrder: true }
+        },
+        _count: { select: { steps: true } }
+      },
+      orderBy: { startedAt: 'desc' }
+    });
+
+    res.json({ journeys });
+  } catch (error) {
+    console.error('Erreur getUserStoryJourneys:', error);
+    res.status(500).json({ 
+      message: 'Erreur lors de la récupération des parcours', 
+      error: error.message 
+    });
+  }
+};
+
+// Récupérer un parcours par ID (alias pour getJourney)
+exports.getJourneyById = exports.getJourney;

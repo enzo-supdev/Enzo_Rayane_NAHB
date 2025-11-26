@@ -1,12 +1,12 @@
-import React, { useState, useContext } from 'react';
+import React, { useState, useContext, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import storyService from '../services/storyService';
-import { AuthContext } from '../contexts/AuthContext';
+import { AuthContext } from '../context/AuthContext';
 import Navbar from '../components/common/Navbar';
 
 export default function StoryCreate() {
   const navigate = useNavigate();
-  const { user } = useContext(AuthContext);
+  const { user, isAuthenticated } = useContext(AuthContext);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [formData, setFormData] = useState({
@@ -14,6 +14,12 @@ export default function StoryCreate() {
     description: '',
     tags: ''
   });
+
+  useEffect(() => {
+    if (!isAuthenticated || (user?.role !== 'AUTHOR' && user?.role !== 'ADMIN')) {
+      navigate('/login');
+    }
+  }, [isAuthenticated, user]);
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
@@ -56,8 +62,8 @@ export default function StoryCreate() {
       });
 
       // Rediriger vers l'édition de la page de départ
-      if (response.story) {
-        navigate(`/stories/${response.story.id}/edit`, {
+      if (response.data && response.data.story) {
+        navigate(`/stories/${response.data.story.id}/edit`, {
           state: { newStory: true }
         });
       }

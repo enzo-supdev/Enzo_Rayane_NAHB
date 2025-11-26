@@ -2,20 +2,26 @@ import api from './api';
 
 const storyService = {
   // Récupérer toutes les histoires publiées
-  getPublishedStories: async (search = '') => {
-    const response = await api.get('/stories', { params: { search } });
-    return response.data;
-  },
+  getPublishedStories: async (filters = {}) => {
+    const params = new URLSearchParams();
+    if (filters.search) params.append('search', filters.search);
+    if (filters.theme) params.append('theme', filters.theme);
+    if (filters.sortBy) params.append('sortBy', filters.sortBy);
+    if (filters.order) params.append('order', filters.order);
 
-  // Récupérer mes histoires
-  getMyStories: async () => {
-    const response = await api.get('/stories/my/stories');
+    const response = await api.get(`/stories?${params.toString()}`);
     return response.data;
   },
 
   // Récupérer une histoire par ID
   getStoryById: async (id) => {
     const response = await api.get(`/stories/${id}`);
+    return response.data;
+  },
+
+  // Récupérer mes histoires (auteur)
+  getMyStories: async () => {
+    const response = await api.get('/stories/my/stories');
     return response.data;
   },
 

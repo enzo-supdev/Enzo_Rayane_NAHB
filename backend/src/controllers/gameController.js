@@ -31,7 +31,7 @@ exports.startGame = async (req, res) => {
       });
     }
 
-    if (story.status !== 'published') {
+    if (story.status !== 'PUBLISHED') {
       return res.status(403).json({
         success: false,
         message: 'Cette histoire n\'est pas encore publiée'
@@ -45,13 +45,12 @@ exports.startGame = async (req, res) => {
       });
     }
 
-    // Créer la session de jeu
-    const gameSession = await prisma.gameSession.create({
+    // Créer un PlayerJourney pour tracker la progression
+    const journey = await prisma.playerJourney.create({
       data: {
         userId: req.user.userId,
         storyId,
-        currentPageId: story.startPageId,
-        isCompleted: false
+        status: 'in_progress'
       },
       include: {
         story: {
@@ -60,23 +59,35 @@ exports.startGame = async (req, res) => {
             title: true,
             description: true
           }
-        },
-        currentPage: {
+        }
+      }
+    });
+
+    // Créer le premier step avec la page de départ
+    const firstStep = await prisma.journeyStep.create({
+      data: {
+        journeyId: journey.id,
+        pageId: story.startPageId,
+        choiceText: null
+      }
+    });
+
+    // Récupérer la page de départ avec ses choix
+    const startPage = await prisma.page.findUnique({
+      where: { id: story.startPageId },
+      include: {
+        choices: {
           include: {
-            choices: {
-              include: {
-                targetPage: {
-                  select: {
-                    id: true,
-                    title: true,
-                    isEnd: true
-                  }
-                }
-              },
-              orderBy: {
-                orderIndex: 'asc'
+            targetPage: {
+              select: {
+                id: true,
+                title: true,
+                isEnd: true
               }
             }
+          },
+          orderBy: {
+            orderIndex: 'asc'
           }
         }
       }
@@ -85,7 +96,11 @@ exports.startGame = async (req, res) => {
     res.status(201).json({
       success: true,
       message: 'Session de jeu démarrée',
-      data: { gameSession }
+      data: { 
+        journey,
+        currentPage: startPage,
+        choices: startPage.choices
+      }
     });
 
   } catch (error) {
@@ -104,43 +119,50 @@ exports.startGame = async (req, res) => {
  */
 exports.makeChoice = async (req, res) => {
   try {
-    const { sessionId, choiceId } = req.body;
+    const { journeyId, choiceId } = req.body;
 
-    if (!sessionId || !choiceId) {
+    if (!journeyId || !choiceId) {
       return res.status(400).json({
         success: false,
-        message: 'ID de session et ID de choix requis'
+        message: 'ID de journey et ID de choix requis'
       });
     }
 
-    // Vérifier que la session existe et appartient à l'utilisateur
-    const session = await prisma.gameSession.findUnique({
-      where: { id: sessionId },
+    // Vérifier que le journey existe et appartient à l'utilisateur
+    const journey = await prisma.playerJourney.findUnique({
+      where: { id: journeyId },
       include: {
-        currentPage: true
+        steps: {
+          orderBy: {
+            createdAt: 'desc'
+          },
+          take: 1
+        }
       }
     });
 
-    if (!session) {
+    if (!journey) {
       return res.status(404).json({
         success: false,
-        message: 'Session de jeu non trouvée'
+        message: 'Journey non trouvé'
       });
     }
 
-    if (session.userId !== req.user.userId) {
+    if (journey.userId !== req.user.userId) {
       return res.status(403).json({
         success: false,
-        message: 'Cette session ne vous appartient pas'
+        message: 'Ce journey ne vous appartient pas'
       });
     }
 
-    if (session.isCompleted) {
+    if (journey.status === 'completed' || journey.status === 'abandoned') {
       return res.status(400).json({
         success: false,
-        message: 'Cette session est déjà terminée'
+        message: 'Ce journey est déjà terminé'
       });
     }
+
+    const currentPageId = journey.steps[0]?.pageId;
 
     // Vérifier que le choix existe et part de la page actuelle
     const choice = await prisma.choice.findUnique({
@@ -174,62 +196,49 @@ exports.makeChoice = async (req, res) => {
       });
     }
 
-    if (choice.fromPageId !== session.currentPageId) {
+    if (choice.fromPageId !== currentPageId) {
       return res.status(400).json({
         success: false,
         message: 'Ce choix ne correspond pas à votre page actuelle'
       });
     }
 
-    // Enregistrer le chemin pris
-    await prisma.pathTaken.create({
+    // Créer un nouveau step pour ce choix
+    await prisma.journeyStep.create({
       data: {
-        sessionId,
-        pageId: session.currentPageId,
-        choiceId
+        journeyId,
+        pageId: choice.toPageId,
+        choiceText: choice.text
       }
     });
 
-    // Mettre à jour la session
+    // Vérifier si c'est une page de fin
     const isEndReached = choice.targetPage.isEnd;
     
-    const updatedSession = await prisma.gameSession.update({
-      where: { id: sessionId },
-      data: {
-        currentPageId: choice.toPageId,
-        isCompleted: isEndReached,
-        endPageId: isEndReached ? choice.toPageId : null,
-        completedAt: isEndReached ? new Date() : null
-      },
-      include: {
-        currentPage: {
-          include: {
-            choices: {
-              include: {
-                targetPage: {
-                  select: {
-                    id: true,
-                    title: true,
-                    isEnd: true
-                  }
-                }
-              },
-              orderBy: {
-                orderIndex: 'asc'
-              }
-            }
-          }
-        },
-        endPage: true
-      }
-    });
-
-    // Si fin atteinte, créer l'enregistrement de fin déverrouillée
+    // Mettre à jour le journey si fin atteinte
     if (isEndReached) {
+      await prisma.playerJourney.update({
+        where: { id: journeyId },
+        data: {
+          status: 'completed',
+          completedAt: new Date()
+        }
+      });
+
+      // Créer une GameSession pour l'historique
+      await prisma.gameSession.create({
+        data: {
+          userId: req.user.userId,
+          storyId: journey.storyId,
+          endPageId: choice.toPageId
+        }
+      });
+
+      // Enregistrer la fin déverrouillée
       await prisma.unlockedEnding.create({
         data: {
           userId: req.user.userId,
-          storyId: session.storyId,
+          storyId: journey.storyId,
           endPageId: choice.toPageId
         }
       }).catch(() => {
@@ -241,7 +250,8 @@ exports.makeChoice = async (req, res) => {
       success: true,
       message: isEndReached ? 'Fin atteinte !' : 'Choix effectué',
       data: { 
-        gameSession: updatedSession,
+        currentPage: choice.targetPage,
+        choices: choice.targetPage.choices,
         isEndReached
       }
     });

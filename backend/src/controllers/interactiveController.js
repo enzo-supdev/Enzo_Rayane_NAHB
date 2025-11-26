@@ -98,6 +98,47 @@ exports.getPageInteractiveZones = async (req, res) => {
   }
 };
 
+// Alias pour getPageInteractiveZones (pour correspondre aux routes)
+exports.getInteractiveZonesByPage = exports.getPageInteractiveZones;
+
+// Récupérer une zone interactive par ID
+exports.getInteractiveZoneById = async (req, res) => {
+  try {
+    const { zoneId } = req.params;
+
+    const zone = await prisma.interactiveZone.findUnique({
+      where: { id: zoneId },
+      include: {
+        page: {
+          select: { id: true, content: true, storyId: true }
+        },
+        targetPage: {
+          select: { id: true, content: true }
+        }
+      }
+    });
+
+    if (!zone) {
+      return res.status(404).json({ 
+        message: 'Zone interactive non trouvée' 
+      });
+    }
+
+    res.json({
+      zone: {
+        ...zone,
+        coordinates: JSON.parse(zone.coordinates)
+      }
+    });
+  } catch (error) {
+    console.error('Erreur getInteractiveZoneById:', error);
+    res.status(500).json({ 
+      message: 'Erreur lors de la récupération de la zone', 
+      error: error.message 
+    });
+  }
+};
+
 // Mettre à jour une zone interactive
 exports.updateInteractiveZone = async (req, res) => {
   try {

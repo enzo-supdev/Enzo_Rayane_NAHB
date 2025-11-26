@@ -1,13 +1,16 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
+import { useAuth } from '../hooks/useAuth';
 import gameService from '../services/gameService';
 import Navbar from '../components/common/Navbar';
 
 const StoryReader = () => {
   const { id } = useParams();
   const navigate = useNavigate();
+  const { isAuthenticated } = useAuth();
 
   const [story, setStory] = useState(null);
+  const [journeyId, setJourneyId] = useState(null);
   const [currentPage, setCurrentPage] = useState(null);
   const [choices, setChoices] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -15,16 +18,21 @@ const StoryReader = () => {
   const [isEnd, setIsEnd] = useState(false);
 
   useEffect(() => {
+    if (!isAuthenticated) {
+      navigate('/login');
+      return;
+    }
     startGame();
-  }, [id]);
+  }, [id, isAuthenticated]);
 
   const startGame = async () => {
     try {
       setLoading(true);
-      const data = await gameService.startGame(id);
-      setStory(data.story);
-      setCurrentPage(data.currentPage);
-      setChoices(data.choices);
+      const response = await gameService.startGame(id);
+      setJourneyId(response.data.journey.id);
+      setStory(response.data.journey.story);
+      setCurrentPage(response.data.currentPage);
+      setChoices(response.data.choices);
     } catch (err) {
       setError(err.response?.data?.message || 'Erreur lors du démarrage');
     } finally {
@@ -35,10 +43,10 @@ const StoryReader = () => {
   const handleChoice = async (choiceId) => {
     try {
       setLoading(true);
-      const data = await gameService.makeChoice(choiceId);
-      setCurrentPage(data.currentPage);
-      setChoices(data.choices);
-      setIsEnd(data.isEnd);
+      const response = await gameService.makeChoice(journeyId, choiceId);
+      setCurrentPage(response.data.currentPage);
+      setChoices(response.data.choices);
+      setIsEnd(response.data.isEndReached);
     } catch (err) {
       setError(err.response?.data?.message || 'Erreur lors du choix');
     } finally {

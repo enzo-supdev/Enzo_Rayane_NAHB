@@ -4,12 +4,12 @@ const storyController = require('../controllers/storyController');
 const auth = require('../middleware/auth');
 const roleCheck = require('../middleware/roleCheck');
 
-// Routes publiques (accessibles à tous les utilisateurs connectés)
-// GET /api/stories - Liste des histoires publiées
-router.get('/', auth, storyController.getPublishedStories);
+// Routes publiques (accessibles sans authentification)
+// GET /api/stories - Liste des histoires publiées (PUBLIC)
+router.get('/', storyController.getPublishedStories);
 
-// GET /api/stories/:id - Détails d'une histoire
-router.get('/:id', auth, storyController.getStoryById);
+// GET /api/stories/:id - Détails d'une histoire (PUBLIC pour lire)
+router.get('/:id', storyController.getStoryById);
 
 // Routes auteur (nécessite le rôle author)
 // GET /api/stories/my/stories - Mes histoires

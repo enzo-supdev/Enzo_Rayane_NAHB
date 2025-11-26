@@ -55,7 +55,7 @@ exports.register = async (req, res) => {
         pseudo,
         email,
         password: hashedPassword,
-        role: role || 'reader', // Par défaut: reader
+        role: role ? role.toUpperCase() : 'READER', // Par défaut: READER
         status: 'active'
       },
       select: {

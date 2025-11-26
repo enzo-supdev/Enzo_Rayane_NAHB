@@ -3,13 +3,13 @@ import { useParams, useNavigate } from 'react-router-dom';
 import storyService from '../services/storyService';
 import pageService from '../services/pageService';
 import choiceService from '../services/choiceService';
-import { AuthContext } from '../contexts/AuthContext';
+import { AuthContext } from '../context/AuthContext';
 import Navbar from '../components/common/Navbar';
 
 export default function StoryEdit() {
   const { storyId } = useParams();
   const navigate = useNavigate();
-  const { user } = useContext(AuthContext);
+  const { user, isAuthenticated } = useContext(AuthContext);
   
   const [story, setStory] = useState(null);
   const [pages, setPages] = useState([]);
@@ -28,23 +28,32 @@ export default function StoryEdit() {
   });
 
   useEffect(() => {
-    fetchStory();
-  }, [storyId]);
+    if (!isAuthenticated || (user?.role !== 'AUTHOR' && user?.role !== 'ADMIN')) {
+      navigate('/login');
+      return;
+    }
+    loadStory();
+  }, [storyId, isAuthenticated, user]);
+
+  const loadStory = async () => {
+    await fetchStory();
+  };
 
   const fetchStory = async () => {
     try {
       setLoading(true);
       const response = await storyService.getStoryById(storyId);
-      setStory(response.story);
+      const storyData = response.data?.story || response.story;
+      setStory(storyData);
       setFormData({
-        title: response.story.title,
-        description: response.story.description,
-        tags: (Array.isArray(response.story.tags) ? response.story.tags : []).join(', ')
+        title: storyData.title,
+        description: storyData.description,
+        tags: (Array.isArray(storyData.tags) ? storyData.tags : []).join(', ')
       });
       
       // Fetch pages
       const pagesResponse = await pageService.getPagesByStory(storyId);
-      setPages(pagesResponse.pages || []);
+      setPages(pagesResponse.data?.pages || pagesResponse.pages || []);
     } catch (err) {
       console.error('Erreur:', err);
       setError('Erreur lors du chargement de l\'histoire');
@@ -78,21 +87,22 @@ export default function StoryEdit() {
     }
 
     try {
-      const newPage = await pageService.createPage({
+      const response = await pageService.createPage({
         storyId,
         content: pageForm.content,
         isEnd: pageForm.isEnd,
         order: pages.length
       });
 
-      setPages([...pages, newPage.page]);
+      const newPage = response.data?.page || response.page;
+      setPages([...pages, newPage]);
       setPageForm({ content: '', isEnd: false });
       setShowPageForm(false);
 
       // Si c'est la première page, la définir comme page de départ
       if (pages.length === 0) {
-        await storyService.updateStory(storyId, { startPageId: newPage.page.id });
-        setStory(prev => ({ ...prev, startPageId: newPage.page.id }));
+        await storyService.updateStory(storyId, { startPageId: newPage.id });
+        setStory(prev => ({ ...prev, startPageId: newPage.id }));
       }
     } catch (err) {
       console.error('Erreur création page:', err);

@@ -2,7 +2,6 @@ import axios from 'axios';
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
 
-// Créer une instance axios
 const api = axios.create({
   baseURL: API_URL,
   headers: {
@@ -10,7 +9,7 @@ const api = axios.create({
   },
 });
 
-// Intercepteur pour ajouter le token JWT à chaque requête
+// Intercepteur pour ajouter le token à chaque requête
 api.interceptors.request.use(
   (config) => {
     const token = localStorage.getItem('token');
@@ -28,11 +27,20 @@ api.interceptors.request.use(
 api.interceptors.response.use(
   (response) => response,
   (error) => {
-    if (error.response?.status === 401) {
-      // Token invalide ou expiré
-      localStorage.removeItem('token');
-      localStorage.removeItem('user');
-      window.location.href = '/login';
+    if (error.response) {
+      // Le serveur a répondu avec un code d'erreur
+      if (error.response.status === 401) {
+        // Token expiré ou invalide
+        localStorage.removeItem('token');
+        localStorage.removeItem('user');
+        window.location.href = '/login';
+      }
+    } else if (error.request) {
+      // La requête a été faite mais pas de réponse
+      console.error('Erreur réseau:', error.request);
+    } else {
+      // Erreur lors de la configuration de la requête
+      console.error('Erreur:', error.message);
     }
     return Promise.reject(error);
   }

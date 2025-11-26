@@ -1,0 +1,138 @@
+/* Thèmes - Chevalier Médiéval */
+
+/* Dégradés */
+.gradient-gold {
+  background: linear-gradient(135deg, var(--color-bronze) 0%, var(--color-gold) 100%);
+}
+
+.gradient-gold-reverse {
+  background: linear-gradient(135deg, var(--color-gold) 0%, var(--color-gold-light) 100%);
+}
+
+.gradient-brown {
+  background: linear-gradient(135deg, var(--color-brown-dark) 0%, var(--color-brown-medium) 100%);
+}
+
+.gradient-brown-dark {
+  background: linear-gradient(180deg, var(--color-brown-dark) 0%, var(--color-brown-darker) 100%);
+}
+
+.gradient-parchment {
+  background: linear-gradient(135deg, var(--color-parchment-light) 0%, var(--color-parchment) 100%);
+}
+
+.gradient-blue {
+  background: linear-gradient(135deg, var(--color-blue-dark) 0%, var(--color-blue-medium) 50%, var(--color-blue-light) 100%);
+}
+
+/* Cartes */
+.card-parchment {
+  background: var(--gradient-parchment);
+  border: var(--border-thick) solid var(--color-bronze);
+  border-radius: var(--border-radius);
+  box-shadow: var(--shadow-medium);
+  padding: var(--spacing-xl);
+  transition: all var(--transition-normal);
+}
+
+.card-parchment:hover {
+  transform: translateY(-5px);
+  box-shadow: var(--shadow-gold-hover);
+  border-color: var(--color-gold);
+}
+
+/* Boutons thématiques */
+.btn-knight {
+  background: linear-gradient(135deg, var(--color-bronze) 0%, var(--color-gold) 100%);
+  color: var(--color-brown-darker);
+  border: var(--border-medium) solid var(--color-bronze);
+  padding: 0.7rem 1.8rem;
+  border-radius: var(--border-radius);
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  cursor: pointer;
+  transition: all var(--transition-normal);
+  box-shadow: var(--shadow-small);
+  position: relative;
+  overflow: hidden;
+}
+
+.btn-knight::before {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 0;
+  height: 0;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.2);
+  transform: translate(-50%, -50%);
+  transition: width 0.6s, height 0.6s;
+}
+
+.btn-knight:hover::before {
+  width: 300px;
+  height: 300px;
+}
+
+.btn-knight:hover {
+  background: linear-gradient(135deg, var(--color-gold) 0%, var(--color-gold-light) 100%);
+  border-color: var(--color-gold);
+  box-shadow: var(--shadow-gold-hover);
+  transform: translateY(-2px);
+}
+
+/* Décorations médiévales */
+.medieval-border {
+  border: var(--border-medium) solid var(--color-bronze);
+  position: relative;
+}
+
+.medieval-border::before,
+.medieval-border::after {
+  content: '⚔';
+  position: absolute;
+  font-size: 2rem;
+  color: var(--color-bronze);
+  opacity: 0.3;
+}
+
+.medieval-border::before {
+  top: 1rem;
+  left: 1rem;
+}
+
+.medieval-border::after {
+  bottom: 1rem;
+  right: 1rem;
+  transform: rotate(180deg);
+}
+
+/* Texte doré */
+.text-gold {
+  color: var(--color-gold);
+  text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
+}
+
+.text-gold-glow {
+  color: var(--color-gold);
+  text-shadow: 0 0 10px rgba(212, 175, 55, 0.5);
+}
+
+/* Titre médiéval */
+.title-medieval {
+  font-family: var(--font-medieval);
+  color: var(--color-gold);
+  text-shadow: 3px 3px 6px rgba(0, 0, 0, 0.8);
+  letter-spacing: 2px;
+}
+
+/* Conteneur parchemin */
+.container-parchment {
+  background: linear-gradient(135deg, var(--color-parchment-light) 0%, var(--color-parchment) 100%);
+  border: var(--border-thick) solid var(--color-bronze);
+  border-radius: var(--border-radius-large);
+  box-shadow: var(--shadow-large);
+  padding: var(--spacing-2xl);
+}

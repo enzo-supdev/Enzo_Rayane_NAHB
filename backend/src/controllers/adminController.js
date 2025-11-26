@@ -189,7 +189,7 @@ exports.unsuspendStory = async (req, res) => {
     const updatedStory = await prisma.story.update({
       where: { id },
       data: {
-        status: 'published' // Remettre en published
+        status: 'PUBLISHED' // Remettre en PUBLISHED
       },
       include: {
         author: {
@@ -240,10 +240,10 @@ exports.getGlobalStats = async (req, res) => {
     // Statistiques des histoires
     const totalStories = await prisma.story.count();
     const publishedStories = await prisma.story.count({
-      where: { status: 'published' }
+      where: { status: 'PUBLISHED' }
     });
     const draftStories = await prisma.story.count({
-      where: { status: 'draft' }
+      where: { status: 'DRAFT' }
     });
     const suspendedStories = await prisma.story.count({
       where: { status: 'suspended' }

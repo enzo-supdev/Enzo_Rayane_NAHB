@@ -12,7 +12,7 @@ const ProtectedRoute = ({ children, roles = [] }) => {
     return <Navigate to="/login" replace />;
   }
 
-  if (roles.length > 0 && !roles.includes(user.role)) {
+  if (roles.length > 0 && !roles.map(r => r.toUpperCase()).includes(user.role.toUpperCase())) {
     return <Navigate to="/unauthorized" replace />;
   }
 

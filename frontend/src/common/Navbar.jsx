@@ -1,59 +1,61 @@
+import React from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../hooks/useAuth';
+import './Navbar.css';
 
 const Navbar = () => {
-  const { isAuthenticated, user, logout } = useAuth();
+  const { user, logout, isAuthenticated } = useAuth();
   const navigate = useNavigate();
 
   const handleLogout = () => {
     logout();
-    navigate('/');
+    navigate('/login');
   };
 
   return (
     <nav className="navbar">
       <div className="navbar-container">
-        <Link to="/" className="navbar-brand">
+        <Link to="/" className="navbar-logo">
           🎭 NAHB
         </Link>
 
         <div className="navbar-menu">
           {isAuthenticated ? (
             <>
-              <Link to="/stories" className="nav-link">
+              <Link to="/stories" className="navbar-link">
                 Histoires
               </Link>
 
-              {(user?.role === 'AUTHOR' || user?.role === 'ADMIN') && (
+              {(user?.role === 'author' || user?.role === 'admin') && (
                 <>
-                  <Link to="/author/dashboard" className="nav-link">
-                    Mes histoires
+                  <Link to="/dashboard" className="navbar-link">
+                    Dashboard
                   </Link>
-                  <Link to="/stories/create" className="nav-link">
-                    Créer
+                  <Link to="/stories/create" className="navbar-link">
+                    Créer une histoire
                   </Link>
                 </>
               )}
 
-              {user?.role === 'ADMIN' && (
-                <Link to="/admin/dashboard" className="nav-link">
+              {user?.role === 'admin' && (
+                <Link to="/admin" className="navbar-link">
                   Admin
                 </Link>
               )}
 
               <div className="navbar-user">
-                <span className="user-name">{user?.pseudo}</span>
-                <button onClick={handleLogout} className="btn-logout">
+                <span className="navbar-username">{user?.pseudo}</span>
+                <button onClick={handleLogout} className="navbar-logout">
                   Déconnexion
                 </button>
               </div>
             </>
           ) : (
             <>
-              <Link to="/login" className="nav-link">
+              <Link to="/login" className="navbar-link">
                 Connexion
               </Link>
-              <Link to="/register" className="btn-primary">
+              <Link to="/register" className="navbar-link navbar-link-register">
                 Inscription
               </Link>
             </>

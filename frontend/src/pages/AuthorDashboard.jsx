@@ -1,11 +1,11 @@
 import React, { useState, useEffect, useContext } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import storyService from '../services/storyService';
-import { AuthContext } from '../contexts/AuthContext';
+import { AuthContext } from '../context/AuthContext';
 import Navbar from '../components/common/Navbar';
 
 export default function AuthorDashboard() {
-  const { user } = useContext(AuthContext);
+  const { user, isAuthenticated } = useContext(AuthContext);
   const navigate = useNavigate();
   const [stories, setStories] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -13,18 +13,22 @@ export default function AuthorDashboard() {
   const [filter, setFilter] = useState('all'); // all, draft, published
 
   useEffect(() => {
+    if (!isAuthenticated) {
+      navigate('/login');
+      return;
+    }
     if (user?.role !== 'AUTHOR' && user?.role !== 'ADMIN') {
       navigate('/');
       return;
     }
     fetchStories();
-  }, [user, navigate]);
+  }, [user, isAuthenticated, navigate]);
 
   const fetchStories = async () => {
     try {
       setLoading(true);
-      const data = await storyService.getMyStories();
-      setStories(data.stories || []);
+      const response = await storyService.getMyStories();
+      setStories(response.data?.stories || response.stories || []);
     } catch (err) {
       console.error('Erreur:', err);
       setError('Erreur lors du chargement de vos histoires');

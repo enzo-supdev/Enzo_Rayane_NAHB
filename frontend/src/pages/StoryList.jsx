@@ -16,9 +16,10 @@ const StoryList = () => {
   const fetchStories = async (searchTerm = '') => {
     try {
       setLoading(true);
-      const data = await storyService.getPublishedStories(searchTerm);
+      const filters = searchTerm ? { search: searchTerm } : {};
+      const data = await storyService.getPublishedStories(filters);
       // Parser les tags depuis JSON si nécessaire
-      const storiesWithParsedTags = data.stories.map(story => {
+      const storiesWithParsedTags = data.data.stories.map(story => {
         let parsedTags = [];
         
         if (story.tags) {

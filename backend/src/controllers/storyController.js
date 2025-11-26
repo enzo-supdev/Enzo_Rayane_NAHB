@@ -11,7 +11,7 @@ exports.getPublishedStories = async (req, res) => {
 
     // Construction de la clause where
     const where = {
-      status: 'published'
+      status: 'PUBLISHED'
     };
 
     // Recherche par titre ou description
@@ -33,8 +33,7 @@ exports.getPublishedStories = async (req, res) => {
         author: {
           select: {
             id: true,
-            pseudo: true,
-            avatarUrl: true
+            pseudo: true
           }
         },
         _count: {
@@ -55,15 +54,26 @@ exports.getPublishedStories = async (req, res) => {
       stories.map(async (story) => {
         const ratings = await prisma.rating.findMany({
           where: { storyId: story.id },
-          select: { rating: true }
+          select: { score: true }
         });
 
         const averageRating = ratings.length > 0
-          ? ratings.reduce((sum, r) => sum + r.rating, 0) / ratings.length
+          ? ratings.reduce((sum, r) => sum + r.score, 0) / ratings.length
           : 0;
+
+        // Parser les tags depuis JSON
+        let parsedTags = [];
+        if (story.tags) {
+          try {
+            parsedTags = typeof story.tags === 'string' ? JSON.parse(story.tags) : story.tags;
+          } catch (e) {
+            parsedTags = [];
+          }
+        }
 
         return {
           ...story,
+          tags: parsedTags,
           averageRating: Math.round(averageRating * 10) / 10,
           totalRatings: ratings.length
         };
@@ -102,9 +112,7 @@ exports.getStoryById = async (req, res) => {
         author: {
           select: {
             id: true,
-            pseudo: true,
-            avatarUrl: true,
-            bio: true
+            pseudo: true
           }
         },
         pages: {
@@ -137,29 +145,48 @@ exports.getStoryById = async (req, res) => {
       });
     }
 
-    // Vérifier les permissions
-    if (story.status === 'draft' && story.authorId !== req.user.userId && req.user.role !== 'admin') {
-      return res.status(403).json({
-        success: false,
-        message: 'Vous n\'avez pas accès à cette histoire'
-      });
+    // Vérifier les permissions (seulement si l'utilisateur est connecté)
+    if (story.status === 'DRAFT') {
+      if (!req.user) {
+        return res.status(403).json({
+          success: false,
+          message: 'Cette histoire n\'est pas encore publiée'
+        });
+      }
+      if (story.authorId !== req.user.userId && req.user.role !== 'admin') {
+        return res.status(403).json({
+          success: false,
+          message: 'Vous n\'avez pas accès à cette histoire'
+        });
+      }
     }
 
     // Calculer la note moyenne
     const ratings = await prisma.rating.findMany({
       where: { storyId: story.id },
-      select: { rating: true }
+      select: { score: true }
     });
 
     const averageRating = ratings.length > 0
-      ? ratings.reduce((sum, r) => sum + r.rating, 0) / ratings.length
+      ? ratings.reduce((sum, r) => sum + r.score, 0) / ratings.length
       : 0;
+
+    // Parser les tags depuis JSON
+    let parsedTags = [];
+    if (story.tags) {
+      try {
+        parsedTags = typeof story.tags === 'string' ? JSON.parse(story.tags) : story.tags;
+      } catch (e) {
+        parsedTags = [];
+      }
+    }
 
     res.status(200).json({
       success: true,
       data: {
         story: {
           ...story,
+          tags: parsedTags,
           averageRating: Math.round(averageRating * 10) / 10,
           totalRatings: ratings.length
         }
@@ -205,15 +232,26 @@ exports.getMyStories = async (req, res) => {
       stories.map(async (story) => {
         const ratings = await prisma.rating.findMany({
           where: { storyId: story.id },
-          select: { rating: true }
+          select: { score: true }
         });
 
         const averageRating = ratings.length > 0
-          ? ratings.reduce((sum, r) => sum + r.rating, 0) / ratings.length
+          ? ratings.reduce((sum, r) => sum + r.score, 0) / ratings.length
           : 0;
+
+        // Parser les tags depuis JSON
+        let parsedTags = [];
+        if (story.tags) {
+          try {
+            parsedTags = typeof story.tags === 'string' ? JSON.parse(story.tags) : story.tags;
+          } catch (e) {
+            parsedTags = [];
+          }
+        }
 
         return {
           ...story,
+          tags: parsedTags,
           averageRating: Math.round(averageRating * 10) / 10,
           totalRatings: ratings.length
         };
@@ -258,9 +296,9 @@ exports.createStory = async (req, res) => {
       data: {
         title,
         description,
-        tags: tags || [],
+        tags: tags && tags.length > 0 ? JSON.stringify(tags) : null,
         theme: theme || null,
-        status: 'draft', // Par défaut en brouillon
+        status: 'DRAFT', // Par défaut en brouillon
         authorId: req.user.userId
       },
       include: {
@@ -322,7 +360,7 @@ exports.updateStory = async (req, res) => {
       data: {
         ...(title && { title }),
         ...(description && { description }),
-        ...(tags !== undefined && { tags }),
+        ...(tags !== undefined && { tags: Array.isArray(tags) ? JSON.stringify(tags) : tags }),
         ...(theme !== undefined && { theme }),
         ...(startPageId && { startPageId })
       },
@@ -448,7 +486,7 @@ exports.publishStory = async (req, res) => {
     const updatedStory = await prisma.story.update({
       where: { id },
       data: {
-        status: 'published',
+        status: 'PUBLISHED',
         publishedAt: new Date()
       }
     });

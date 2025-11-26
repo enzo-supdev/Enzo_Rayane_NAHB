@@ -22,7 +22,7 @@ exports.getPagesByStory = async (req, res) => {
     }
 
     // Vérifier les permissions (pour les histoires en brouillon)
-    if (story.status === 'draft' && story.authorId !== req.user.userId && req.user.role !== 'admin') {
+    if (story.status === 'DRAFT' && story.authorId !== req.user.userId && req.user.role !== 'admin') {
       return res.status(403).json({
         success: false,
         message: 'Vous n\'avez pas accès à cette histoire'
@@ -122,7 +122,7 @@ exports.getPageById = async (req, res) => {
     }
 
     // Vérifier les permissions
-    if (page.story.status === 'draft' && page.story.authorId !== req.user.userId && req.user.role !== 'admin') {
+    if (page.story.status === 'DRAFT' && page.story.authorId !== req.user.userId && req.user.role !== 'admin') {
       return res.status(403).json({
         success: false,
         message: 'Vous n\'avez pas accès à cette page'
