@@ -111,8 +111,8 @@ const StoryReader = () => {
               <div className="choices-list">
                 {choices.map((choice) => (
                   <button
-                    key={choice._id}
-                    onClick={() => handleChoice(choice._id)}
+                    key={choice.id}
+                    onClick={() => handleChoice(choice.id)}
                     className="choice-button"
                     disabled={loading}
                   >

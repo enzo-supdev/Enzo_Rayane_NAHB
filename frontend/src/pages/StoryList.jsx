@@ -17,8 +17,14 @@ const StoryList = () => {
     try {
       setLoading(true);
       const data = await storyService.getPublishedStories(searchTerm);
-      setStories(data.stories);
+      // Parser les tags depuis JSON si nécessaire
+      const storiesWithParsedTags = data.stories.map(story => ({
+        ...story,
+        tags: typeof story.tags === 'string' ? JSON.parse(story.tags || '[]') : (story.tags || [])
+      }));
+      setStories(storiesWithParsedTags);
     } catch (err) {
+      console.error(err);
       setError('Erreur lors du chargement des histoires');
     } finally {
       setLoading(false);
@@ -61,7 +67,7 @@ const StoryList = () => {
               <p className="no-stories">Aucune histoire disponible</p>
             ) : (
               stories.map((story) => (
-                <div key={story._id} className="story-card">
+                <div key={story.id} className="story-card">
                   <h3>{story.title}</h3>
                   <p className="story-description">{story.description}</p>
                   
@@ -77,10 +83,10 @@ const StoryList = () => {
 
                   <div className="story-footer">
                     <span className="story-author">
-                      Par {story.authorId?.pseudo || 'Anonyme'}
+                      Par {story.author?.pseudo || 'Anonyme'}
                     </span>
                     <Link
-                      to={`/stories/${story._id}/read`}
+                      to={`/stories/${story.id}/read`}
                       className="btn-primary"
                     >
                       Lire
