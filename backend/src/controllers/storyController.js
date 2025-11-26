@@ -49,7 +49,13 @@ exports.getPublishedStories = async (req, res) => {
       orderBy: { createdAt: 'desc' }
     });
 
-    res.json({ stories });
+    // Parser les tags depuis JSON pour chaque histoire
+    const storiesWithParsedTags = stories.map(story => ({
+      ...story,
+      tags: story.tags ? JSON.parse(story.tags) : []
+    }));
+
+    res.json({ stories: storiesWithParsedTags });
   } catch (error) {
     console.error('Erreur getPublishedStories:', error);
     res.status(500).json({ 

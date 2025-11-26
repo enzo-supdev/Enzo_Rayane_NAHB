@@ -24,6 +24,16 @@ app.use('/api/pages', require('./routes/pages'));
 app.use('/api/choices', require('./routes/choices'));
 app.use('/api/game', require('./routes/game'));     
 app.use('/api/admin', require('./routes/admin'));
+app.use('/api/ratings', require('./routes/ratings'));
+app.use('/api/endings', require('./routes/endings'));
+app.use('/api/author', require('./routes/author'));
+app.use('/api/statistics', require('./routes/statistics'));
+app.use('/api/reports', require('./routes/reports'));
+app.use('/api/tree', require('./routes/tree'));
+app.use('/api/interactive', require('./routes/interactive'));
+app.use('/api/journey', require('./routes/journey'));
+app.use('/api/images', require('./routes/images'));
+app.use('/api/dice', require('./routes/dice'));
 
 // Gestionnaire d'erreurs (doit être après les routes)
 app.use(errorHandler);

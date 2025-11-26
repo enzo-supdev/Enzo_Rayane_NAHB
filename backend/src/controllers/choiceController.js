@@ -1,6 +1,5 @@
-const Choice = require('../models/Choice');
-const Page = require('../models/Page');
-const Story = require('../models/Story');
+const { PrismaClient } = require('@prisma/client');
+const prisma = new PrismaClient();
 
 // Créer un choix
 exports.createChoice = async (req, res) => {
@@ -8,7 +7,9 @@ exports.createChoice = async (req, res) => {
     const { pageId, text, targetPageId, order } = req.body;
 
     // Vérifier que la page source existe
-    const page = await Page.findById(pageId);
+    const page = await prisma.page.findUnique({
+      where: { id: pageId }
+    });
     if (!page) {
       return res.status(404).json({ 
         message: 'Page source non trouvée' 
@@ -16,7 +17,9 @@ exports.createChoice = async (req, res) => {
     }
 
     // Vérifier que la page cible existe
-    const targetPage = await Page.findById(targetPageId);
+    const targetPage = await prisma.page.findUnique({
+      where: { id: targetPageId }
+    });
     if (!targetPage) {
       return res.status(404).json({ 
         message: 'Page cible non trouvée' 
@@ -24,15 +27,17 @@ exports.createChoice = async (req, res) => {
     }
 
     // Vérifier que les deux pages appartiennent à la même histoire
-    if (page.storyId.toString() !== targetPage.storyId.toString()) {
+    if (page.storyId !== targetPage.storyId) {
       return res.status(400).json({ 
         message: 'Les pages doivent appartenir à la même histoire' 
       });
     }
 
     // Vérifier que l'utilisateur est l'auteur de l'histoire
-    const story = await Story.findById(page.storyId);
-    if (story.authorId.toString() !== req.user._id.toString()) {
+    const story = await prisma.story.findUnique({
+      where: { id: page.storyId }
+    });
+    if (story.authorId !== req.userId) {
       return res.status(403).json({ 
         message: 'Vous n\'êtes pas autorisé à ajouter des choix à cette histoire' 
       });
@@ -45,20 +50,21 @@ exports.createChoice = async (req, res) => {
       });
     }
 
-    const choice = new Choice({
-      pageId,
-      text,
-      targetPageId,
-      order: order || 0
+    const choice = await prisma.choice.create({
+      data: {
+        pageId,
+        text,
+        targetPageId,
+        order: order || 0
+      }
     });
-
-    await choice.save();
 
     res.status(201).json({
       message: 'Choix créé avec succès',
       choice
     });
   } catch (error) {
+    console.error('Erreur createChoice:', error);
     res.status(500).json({ 
       message: 'Erreur lors de la création du choix', 
       error: error.message 
@@ -71,12 +77,15 @@ exports.getChoicesByPage = async (req, res) => {
   try {
     const { pageId } = req.params;
 
-    const choices = await Choice.find({ pageId })
-      .populate('targetPageId', 'content isEnd')
-      .sort({ order: 1 });
+    const choices = await prisma.choice.findMany({
+      where: { pageId },
+      include: { targetPage: { select: { content: true, isEnd: true } } },
+      orderBy: { order: 'asc' }
+    });
 
     res.json({ choices });
   } catch (error) {
+    console.error('Erreur getChoicesByPage:', error);
     res.status(500).json({ 
       message: 'Erreur lors de la récupération des choix', 
       error: error.message 
@@ -90,7 +99,9 @@ exports.updateChoice = async (req, res) => {
     const { id } = req.params;
     const { text, targetPageId, order } = req.body;
 
-    const choice = await Choice.findById(id);
+    const choice = await prisma.choice.findUnique({
+      where: { id }
+    });
 
     if (!choice) {
       return res.status(404).json({ 
@@ -99,41 +110,52 @@ exports.updateChoice = async (req, res) => {
     }
 
     // Vérifier que l'utilisateur est l'auteur
-    const page = await Page.findById(choice.pageId);
-    const story = await Story.findById(page.storyId);
+    const page = await prisma.page.findUnique({
+      where: { id: choice.pageId }
+    });
+    const story = await prisma.story.findUnique({
+      where: { id: page.storyId }
+    });
     
-    if (story.authorId.toString() !== req.user._id.toString()) {
+    if (story.authorId !== req.userId) {
       return res.status(403).json({ 
         message: 'Vous n\'êtes pas autorisé à modifier ce choix' 
       });
     }
 
     // Mettre à jour les champs
-    if (text !== undefined) choice.text = text;
+    const updateData = {};
+    if (text !== undefined) updateData.text = text;
     if (targetPageId !== undefined) {
       // Vérifier que la nouvelle page cible existe et appartient à la même histoire
-      const newTargetPage = await Page.findById(targetPageId);
+      const newTargetPage = await prisma.page.findUnique({
+        where: { id: targetPageId }
+      });
       if (!newTargetPage) {
         return res.status(404).json({ 
           message: 'Page cible non trouvée' 
         });
       }
-      if (newTargetPage.storyId.toString() !== page.storyId.toString()) {
+      if (newTargetPage.storyId !== page.storyId) {
         return res.status(400).json({ 
           message: 'La page cible doit appartenir à la même histoire' 
         });
       }
-      choice.targetPageId = targetPageId;
+      updateData.targetPageId = targetPageId;
     }
-    if (order !== undefined) choice.order = order;
+    if (order !== undefined) updateData.order = order;
 
-    await choice.save();
+    const updatedChoice = await prisma.choice.update({
+      where: { id },
+      data: updateData
+    });
 
     res.json({
       message: 'Choix mis à jour avec succès',
-      choice
+      choice: updatedChoice
     });
   } catch (error) {
+    console.error('Erreur updateChoice:', error);
     res.status(500).json({ 
       message: 'Erreur lors de la mise à jour du choix', 
       error: error.message 
@@ -146,7 +168,9 @@ exports.deleteChoice = async (req, res) => {
   try {
     const { id } = req.params;
 
-    const choice = await Choice.findById(id);
+    const choice = await prisma.choice.findUnique({
+      where: { id }
+    });
 
     if (!choice) {
       return res.status(404).json({ 
@@ -155,21 +179,28 @@ exports.deleteChoice = async (req, res) => {
     }
 
     // Vérifier que l'utilisateur est l'auteur
-    const page = await Page.findById(choice.pageId);
-    const story = await Story.findById(page.storyId);
+    const page = await prisma.page.findUnique({
+      where: { id: choice.pageId }
+    });
+    const story = await prisma.story.findUnique({
+      where: { id: page.storyId }
+    });
     
-    if (story.authorId.toString() !== req.user._id.toString()) {
+    if (story.authorId !== req.userId) {
       return res.status(403).json({ 
         message: 'Vous n\'êtes pas autorisé à supprimer ce choix' 
       });
     }
 
-    await Choice.findByIdAndDelete(id);
+    await prisma.choice.delete({
+      where: { id }
+    });
 
     res.json({
       message: 'Choix supprimé avec succès'
     });
   } catch (error) {
+    console.error('Erreur deleteChoice:', error);
     res.status(500).json({ 
       message: 'Erreur lors de la suppression du choix', 
       error: error.message 

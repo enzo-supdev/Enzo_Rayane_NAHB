@@ -1,0 +1,81 @@
+version: '3.8'
+
+services:
+  # ============================================
+  # Base de données MySQL
+  # ============================================
+  db:
+    image: mysql:8.0
+    container_name: nahb_mysql
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_DATABASE: nahb_db
+      MYSQL_USER: nahb_user
+      MYSQL_PASSWORD: nahb_password
+      MYSQL_INITDB_SKIP_TZINFO: "yes"
+    ports:
+      - "3306:3306"
+    volumes:
+      - mysql_data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      timeout: 20s
+      retries: 10
+    networks:
+      - nahb_network
+
+  # ============================================
+  # Backend Node.js + Express
+  # ============================================
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: nahb_backend
+    ports:
+      - "5000:5000"
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      NODE_ENV: development
+      DATABASE_URL: mysql://nahb_user:nahb_password@db:3306/nahb_db
+      SHADOW_DATABASE_URL: mysql://nahb_user:nahb_password@db:3306/nahb_db_shadow
+      JWT_SECRET: your-secret-key-change-in-production
+      PORT: 5000
+      CORS_ORIGIN: http://localhost:3000
+    volumes:
+      - ./backend:/app
+      - /app/node_modules
+    command: npm run dev
+    networks:
+      - nahb_network
+
+  # ============================================
+  # Frontend Vite + React
+  # ============================================
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: nahb_frontend
+    ports:
+      - "3000:3000"
+    depends_on:
+      - backend
+    environment:
+      VITE_API_URL: http://backend:5000/api
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules
+    command: npm run dev
+    networks:
+      - nahb_network
+
+volumes:
+  mysql_data:
+    driver: local
+
+networks:
+  nahb_network:
+    driver: bridge

@@ -1,13 +1,14 @@
-const User = require('../models/User');
-const Story = require('../models/Story');
-const GameSession = require('../models/GameSession');
+const { PrismaClient } = require('@prisma/client');
+const prisma = new PrismaClient();
 
 // Bannir un auteur
 exports.banUser = async (req, res) => {
   try {
     const { userId } = req.params;
 
-    const user = await User.findById(userId);
+    const user = await prisma.user.findUnique({
+      where: { id: userId }
+    });
 
     if (!user) {
       return res.status(404).json({ 
@@ -15,18 +16,21 @@ exports.banUser = async (req, res) => {
       });
     }
 
-    user.isBanned = true;
-    await user.save();
+    const updatedUser = await prisma.user.update({
+      where: { id: userId },
+      data: { isBanned: true }
+    });
 
     res.json({
       message: 'Utilisateur banni avec succès',
       user: {
-        id: user._id,
-        pseudo: user.pseudo,
-        isBanned: user.isBanned
+        id: updatedUser.id,
+        pseudo: updatedUser.pseudo,
+        isBanned: updatedUser.isBanned
       }
     });
   } catch (error) {
+    console.error('Erreur banUser:', error);
     res.status(500).json({ 
       message: 'Erreur lors du bannissement', 
       error: error.message 
@@ -39,7 +43,9 @@ exports.unbanUser = async (req, res) => {
   try {
     const { userId } = req.params;
 
-    const user = await User.findById(userId);
+    const user = await prisma.user.findUnique({
+      where: { id: userId }
+    });
 
     if (!user) {
       return res.status(404).json({ 
@@ -47,18 +53,21 @@ exports.unbanUser = async (req, res) => {
       });
     }
 
-    user.isBanned = false;
-    await user.save();
+    const updatedUser = await prisma.user.update({
+      where: { id: userId },
+      data: { isBanned: false }
+    });
 
     res.json({
       message: 'Utilisateur débanni avec succès',
       user: {
-        id: user._id,
-        pseudo: user.pseudo,
-        isBanned: user.isBanned
+        id: updatedUser.id,
+        pseudo: updatedUser.pseudo,
+        isBanned: updatedUser.isBanned
       }
     });
   } catch (error) {
+    console.error('Erreur unbanUser:', error);
     res.status(500).json({ 
       message: 'Erreur lors du débannissement', 
       error: error.message 
@@ -71,7 +80,9 @@ exports.suspendStory = async (req, res) => {
   try {
     const { storyId } = req.params;
 
-    const story = await Story.findById(storyId);
+    const story = await prisma.story.findUnique({
+      where: { id: storyId }
+    });
 
     if (!story) {
       return res.status(404).json({ 
@@ -79,14 +90,17 @@ exports.suspendStory = async (req, res) => {
       });
     }
 
-    story.status = 'suspended';
-    await story.save();
+    const updatedStory = await prisma.story.update({
+      where: { id: storyId },
+      data: { status: 'SUSPENDED' }
+    });
 
     res.json({
       message: 'Histoire suspendue avec succès',
-      story
+      story: updatedStory
     });
   } catch (error) {
+    console.error('Erreur suspendStory:', error);
     res.status(500).json({ 
       message: 'Erreur lors de la suspension', 
       error: error.message 
@@ -97,31 +111,34 @@ exports.suspendStory = async (req, res) => {
 // Statistiques globales
 exports.getGlobalStats = async (req, res) => {
   try {
-    const totalUsers = await User.countDocuments();
-    const totalStories = await Story.countDocuments();
-    const publishedStories = await Story.countDocuments({ status: 'published' });
-    const totalPlays = await GameSession.countDocuments();
+    const totalUsers = await prisma.user.count();
+    const totalStories = await prisma.story.count();
+    const publishedStories = await prisma.story.count({
+      where: { status: 'PUBLISHED' }
+    });
+    const totalPlays = await prisma.gameSession.count();
 
     // Top 10 histoires les plus jouées
-    const topStories = await GameSession.aggregate([
-      { $group: { 
-        _id: '$storyId', 
-        playCount: { $sum: 1 } 
-      }},
-      { $sort: { playCount: -1 } },
-      { $limit: 10 },
-      { $lookup: {
-        from: 'stories',
-        localField: '_id',
-        foreignField: '_id',
-        as: 'story'
-      }},
-      { $unwind: '$story' },
-      { $project: {
-        title: '$story.title',
-        playCount: 1
-      }}
-    ]);
+    const topStoriesData = await prisma.gameSession.groupBy({
+      by: ['storyId'],
+      _count: { id: true },
+      orderBy: { _count: { id: 'desc' } },
+      take: 10
+    });
+
+    const topStories = await Promise.all(
+      topStoriesData.map(async (item) => {
+        const story = await prisma.story.findUnique({
+          where: { id: item.storyId },
+          select: { id: true, title: true }
+        });
+        return {
+          storyId: item.storyId,
+          title: story?.title || 'Unknown',
+          playCount: item._count.id
+        };
+      })
+    );
 
     res.json({
       totalUsers,
@@ -131,6 +148,7 @@ exports.getGlobalStats = async (req, res) => {
       topStories
     });
   } catch (error) {
+    console.error('Erreur getGlobalStats:', error);
     res.status(500).json({ 
       message: 'Erreur lors de la récupération des statistiques', 
       error: error.message 

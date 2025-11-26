@@ -6,7 +6,7 @@
       });
     }
 
-    if (!allowedRoles.includes(req.user.role)) {
+    if (!allowedRoles.includes(req.user.role.toLowerCase())) {
       return res.status(403).json({ 
         message: 'Accès non autorisé' 
       });

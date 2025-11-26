@@ -18,10 +18,26 @@ const StoryList = () => {
       setLoading(true);
       const data = await storyService.getPublishedStories(searchTerm);
       // Parser les tags depuis JSON si nécessaire
-      const storiesWithParsedTags = data.stories.map(story => ({
-        ...story,
-        tags: typeof story.tags === 'string' ? JSON.parse(story.tags || '[]') : (story.tags || [])
-      }));
+      const storiesWithParsedTags = data.stories.map(story => {
+        let parsedTags = [];
+        
+        if (story.tags) {
+          if (typeof story.tags === 'string') {
+            try {
+              parsedTags = JSON.parse(story.tags);
+            } catch (e) {
+              parsedTags = [];
+            }
+          } else if (Array.isArray(story.tags)) {
+            parsedTags = story.tags;
+          }
+        }
+        
+        return {
+          ...story,
+          tags: Array.isArray(parsedTags) ? parsedTags : []
+        };
+      });
       setStories(storiesWithParsedTags);
     } catch (err) {
       console.error(err);

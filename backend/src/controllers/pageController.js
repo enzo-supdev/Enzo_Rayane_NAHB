@@ -1,6 +1,5 @@
-const Page = require('../models/Page');
-const Story = require('../models/Story');
-const Choice = require('../models/Choice');
+const { PrismaClient } = require('@prisma/client');
+const prisma = new PrismaClient();
 
 // Créer une page
 exports.createPage = async (req, res) => {
@@ -8,7 +7,9 @@ exports.createPage = async (req, res) => {
     const { storyId, content, isEnd, order } = req.body;
 
     // Vérifier que l'histoire existe et appartient à l'auteur
-    const story = await Story.findById(storyId);
+    const story = await prisma.story.findUnique({
+      where: { id: storyId }
+    });
 
     if (!story) {
       return res.status(404).json({ 
@@ -16,26 +17,27 @@ exports.createPage = async (req, res) => {
       });
     }
 
-    if (story.authorId.toString() !== req.user._id.toString()) {
+    if (story.authorId !== req.userId) {
       return res.status(403).json({ 
         message: 'Vous n\'êtes pas autorisé à ajouter des pages à cette histoire' 
       });
     }
 
-    const page = new Page({
-      storyId,
-      content,
-      isEnd: isEnd || false,
-      order: order || 0
+    const page = await prisma.page.create({
+      data: {
+        storyId,
+        content,
+        isEnd: isEnd || false,
+        order: order || 0
+      }
     });
-
-    await page.save();
 
     res.status(201).json({
       message: 'Page créée avec succès',
       page
     });
   } catch (error) {
+    console.error('Erreur createPage:', error);
     res.status(500).json({ 
       message: 'Erreur lors de la création de la page', 
       error: error.message 
@@ -48,10 +50,14 @@ exports.getPagesByStory = async (req, res) => {
   try {
     const { storyId } = req.params;
 
-    const pages = await Page.find({ storyId }).sort({ order: 1 });
+    const pages = await prisma.page.findMany({
+      where: { storyId },
+      orderBy: { order: 'asc' }
+    });
 
     res.json({ pages });
   } catch (error) {
+    console.error('Erreur getPagesByStory:', error);
     res.status(500).json({ 
       message: 'Erreur lors de la récupération des pages', 
       error: error.message 
@@ -64,7 +70,9 @@ exports.getPageById = async (req, res) => {
   try {
     const { id } = req.params;
 
-    const page = await Page.findById(id);
+    const page = await prisma.page.findUnique({
+      where: { id }
+    });
 
     if (!page) {
       return res.status(404).json({ 
@@ -73,13 +81,17 @@ exports.getPageById = async (req, res) => {
     }
 
     // Récupérer les choix de la page
-    const choices = await Choice.find({ pageId: id }).sort({ order: 1 });
+    const choices = await prisma.choice.findMany({
+      where: { pageId: id },
+      orderBy: { order: 'asc' }
+    });
 
     res.json({ 
       page,
       choices
     });
   } catch (error) {
+    console.error('Erreur getPageById:', error);
     res.status(500).json({ 
       message: 'Erreur lors de la récupération de la page', 
       error: error.message 
@@ -93,7 +105,9 @@ exports.updatePage = async (req, res) => {
     const { id } = req.params;
     const { content, isEnd, order } = req.body;
 
-    const page = await Page.findById(id);
+    const page = await prisma.page.findUnique({
+      where: { id }
+    });
 
     if (!page) {
       return res.status(404).json({ 
@@ -102,25 +116,33 @@ exports.updatePage = async (req, res) => {
     }
 
     // Vérifier que l'utilisateur est l'auteur de l'histoire
-    const story = await Story.findById(page.storyId);
-    if (story.authorId.toString() !== req.user._id.toString()) {
+    const story = await prisma.story.findUnique({
+      where: { id: page.storyId }
+    });
+    
+    if (story.authorId !== req.userId) {
       return res.status(403).json({ 
         message: 'Vous n\'êtes pas autorisé à modifier cette page' 
       });
     }
 
     // Mettre à jour les champs
-    if (content !== undefined) page.content = content;
-    if (isEnd !== undefined) page.isEnd = isEnd;
-    if (order !== undefined) page.order = order;
+    const updateData = {};
+    if (content !== undefined) updateData.content = content;
+    if (isEnd !== undefined) updateData.isEnd = isEnd;
+    if (order !== undefined) updateData.order = order;
 
-    await page.save();
+    const updatedPage = await prisma.page.update({
+      where: { id },
+      data: updateData
+    });
 
     res.json({
       message: 'Page mise à jour avec succès',
-      page
+      page: updatedPage
     });
   } catch (error) {
+    console.error('Erreur updatePage:', error);
     res.status(500).json({ 
       message: 'Erreur lors de la mise à jour de la page', 
       error: error.message 
@@ -133,7 +155,9 @@ exports.deletePage = async (req, res) => {
   try {
     const { id } = req.params;
 
-    const page = await Page.findById(id);
+    const page = await prisma.page.findUnique({
+      where: { id }
+    });
 
     if (!page) {
       return res.status(404).json({ 
@@ -142,26 +166,26 @@ exports.deletePage = async (req, res) => {
     }
 
     // Vérifier que l'utilisateur est l'auteur de l'histoire
-    const story = await Story.findById(page.storyId);
-    if (story.authorId.toString() !== req.user._id.toString()) {
+    const story = await prisma.story.findUnique({
+      where: { id: page.storyId }
+    });
+    
+    if (story.authorId !== req.userId) {
       return res.status(403).json({ 
         message: 'Vous n\'êtes pas autorisé à supprimer cette page' 
       });
     }
 
-    // Supprimer tous les choix qui pointent vers cette page
-    await Choice.deleteMany({ targetPageId: id });
-
-    // Supprimer tous les choix de cette page
-    await Choice.deleteMany({ pageId: id });
-
-    // Supprimer la page
-    await Page.findByIdAndDelete(id);
+    // Supprimer tous les choix liés à cette page (en cascade via Prisma)
+    await prisma.page.delete({
+      where: { id }
+    });
 
     res.json({
       message: 'Page supprimée avec succès'
     });
   } catch (error) {
+    console.error('Erreur deletePage:', error);
     res.status(500).json({ 
       message: 'Erreur lors de la suppression de la page', 
       error: error.message 

@@ -9,6 +9,7 @@ import Register from './pages/Register';
 import StoryList from './pages/StoryList';
 import StoryReader from './pages/StoryReader';
 import StoryCreate from './pages/StoryCreate';
+import StoryEdit from './pages/StoryEdit';
 import AuthorDashboard from './pages/AuthorDashboard';
 import NotFound from './pages/NotFound';
 import Unauthorized from './pages/Unauthorized';
@@ -43,8 +44,26 @@ function App() {
               </ProtectedRoute>
             }
           />
+
+          <Route
+            path="/stories/:storyId/edit"
+            element={
+              <ProtectedRoute roles={['author', 'admin']}>
+                <StoryEdit />
+              </ProtectedRoute>
+            }
+          />
           
           {/* Routes auteur */}
+          <Route
+            path="/dashboard"
+            element={
+              <ProtectedRoute roles={['author', 'admin']}>
+                <AuthorDashboard />
+              </ProtectedRoute>
+            }
+          />
+
           <Route
             path="/author/dashboard"
             element={
