@@ -6,13 +6,15 @@
   "scripts": {
     "start": "node src/server.js",
     "dev": "nodemon src/server.js",
+    "seed": "node prisma/seed.js",
     "test": "echo \"Tests à venir\" && exit 0"
   },
   "keywords": [
     "nahb",
     "api",
     "express",
-    "mongodb"
+    "mysql",
+    "prisma"
   ],
   "authors": [
     "Enzo",
@@ -28,7 +30,6 @@
     "express-validator": "^7.0.1",
     "helmet": "^7.1.0",
     "jsonwebtoken": "^9.0.2",
-    "mongoose": "^8.0.0",
     "prisma": "^6.19.0"
   },
   "devDependencies": {

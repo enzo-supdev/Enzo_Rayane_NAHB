@@ -1,13 +1,3 @@
-﻿const mongoose = require('mongoose');
-
-const connectDB = async () => {
-  try {
-    await mongoose.connect(process.env.MONGODB_URI);
-    console.log('✅ MongoDB connecté avec succès');
-  } catch (error) {
-    console.error('❌ Erreur de connexion MongoDB:', error.message);
-    process.exit(1);
-  }
-};
-
-module.exports = connectDB;
+﻿// Prisma est déjà configuré pour se connecter à MySQL via DATABASE_URL dans .env
+// Ce fichier n'est plus utilisé (Prisma gère la connexion DB)
+// Les modèles sont définis dans prisma/schema.prisma

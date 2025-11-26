@@ -1,15 +1,131 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
-// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
-// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
-
 generator client {
-  provider = "prisma-client"
-  output   = "../src/generated/prisma"
+  provider = "prisma-client-js"
 }
 
 datasource db {
-  provider = "postgresql"
+  provider = "mysql"
   url      = env("DATABASE_URL")
+  shadowDatabaseUrl = env("SHADOW_DATABASE_URL")
+}
+
+// ============================================
+// NIVEAU 10/20 - FONCTIONNALITÉS DE BASE
+// ============================================
+
+// Énumérations
+enum Role {
+  READER
+  AUTHOR
+  ADMIN
+}
+
+enum StoryStatus {
+  DRAFT
+  PUBLISHED
+}
+
+// ============================================
+// MODÈLES
+// ============================================
+
+model User {
+  id           String   @id @default(uuid())
+  pseudo       String   @unique
+  email        String   @unique
+  password     String   // passwordHash dans le diagramme
+  role         Role     @default(READER)
+  isBanned     Boolean  @default(false)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  // Relations
+  stories      Story[]
+  gameSessions GameSession[]
+
+  @@index([email])
+  @@index([pseudo])
+  @@map("users")
+}
+
+model Story {
+  id          String      @id @default(uuid())
+  title       String      @db.VarChar(200)
+  description String      @db.Text
+  tags        String?     @db.Text // Stocké en JSON
+  status      StoryStatus @default(DRAFT)
+  authorId    String
+  startPageId String?     @unique
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relations
+  author       User          @relation(fields: [authorId], references: [id], onDelete: Cascade)
+  pages        Page[]
+  startPage    Page?         @relation("StoryStartPage", fields: [startPageId], references: [id], onDelete: SetNull)
+  gameSessions GameSession[]
+
+  @@index([authorId])
+  @@index([status])
+  @@map("stories")
+}
+
+model Page {
+  id      String  @id @default(uuid())
+  storyId String
+  content String  @db.Text
+  isEnd   Boolean @default(false)
+  order   Int     @default(0)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relations
+  story               Story         @relation(fields: [storyId], references: [id], onDelete: Cascade)
+  choices             Choice[]      @relation("PageChoices")
+  choicesTargeting    Choice[]      @relation("TargetPage")
+  gameSessions        GameSession[]
+  storyAsStartPage    Story?        @relation("StoryStartPage")
+
+  @@index([storyId])
+  @@index([isEnd])
+  @@map("pages")
+}
+
+model Choice {
+  id           String @id @default(uuid())
+  pageId       String
+  text         String @db.VarChar(500)
+  targetPageId String
+  order        Int    @default(0)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relations
+  page       Page @relation("PageChoices", fields: [pageId], references: [id], onDelete: Cascade)
+  targetPage Page @relation("TargetPage", fields: [targetPageId], references: [id], onDelete: Cascade)
+
+  @@index([pageId])
+  @@index([targetPageId])
+  @@map("choices")
+}
+
+model GameSession {
+  id        String @id @default(uuid())
+  userId    String
+  storyId   String
+  endPageId String
+
+  playedAt DateTime @default(now())
+
+  // Relations
+  user    User  @relation(fields: [userId], references: [id], onDelete: Cascade)
+  story   Story @relation(fields: [storyId], references: [id], onDelete: Cascade)
+  endPage Page  @relation(fields: [endPageId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([storyId])
+  @@index([endPageId])
+  @@map("game_sessions")
 }

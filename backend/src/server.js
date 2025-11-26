@@ -3,7 +3,6 @@ const cors = require('cors');
 const helmet = require('helmet');
 require('dotenv').config();
 
-const connectDB = require('./config/database');
 const errorHandler = require('./middleware/errorHandler');
 
 const app = express();
@@ -28,9 +27,6 @@ app.use('/api/admin', require('./routes/admin'));
 
 // Gestionnaire d'erreurs (doit être après les routes)
 app.use(errorHandler);
-
-// Connexion MongoDB
-connectDB();
 
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => {
