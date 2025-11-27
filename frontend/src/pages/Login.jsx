@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
+import './Auth.css';
 
 const Login = () => {
   const [formData, setFormData] = useState({
@@ -29,7 +30,7 @@ const Login = () => {
       await login(formData);
       navigate('/stories');
     } catch (err) {
-      setError(err.response?.data?.message || 'Erreur de connexion');
+      setError(err.response?.data?.message || 'Email ou mot de passe incorrect');
     } finally {
       setLoading(false);
     }
@@ -37,14 +38,17 @@ const Login = () => {
 
   return (
     <div className="auth-container">
-      <div className="auth-card">
-        <h1>🎭 Connexion</h1>
+      <div className="auth-card card">
+        <div className="auth-header">
+          <h1>🏰 Connexion</h1>
+          <p>Bon retour parmi nous, aventurier !</p>
+        </div>
         
-        {error && <div className="error-message">{error}</div>}
+        {error && <div className="alert alert-error">{error}</div>}
         
-        <form onSubmit={handleSubmit}>
+        <form onSubmit={handleSubmit} className="auth-form">
           <div className="form-group">
-            <label htmlFor="email">Email</label>
+            <label htmlFor="email">📧 Email</label>
             <input
               type="email"
               id="email"
@@ -52,11 +56,13 @@ const Login = () => {
               value={formData.email}
               onChange={handleChange}
               required
+              placeholder="votre@email.com"
+              autoComplete="email"
             />
           </div>
 
           <div className="form-group">
-            <label htmlFor="password">Mot de passe</label>
+            <label htmlFor="password">🗝️ Mot de Passe</label>
             <input
               type="password"
               id="password"
@@ -64,17 +70,26 @@ const Login = () => {
               value={formData.password}
               onChange={handleChange}
               required
+              placeholder="Votre mot de passe"
+              autoComplete="current-password"
             />
           </div>
 
-          <button type="submit" disabled={loading} className="btn-primary">
-            {loading ? 'Connexion...' : 'Se connecter'}
+          <button type="submit" disabled={loading} className="btn btn-primary btn-block">
+            {loading ? '⏳ Connexion...' : '⚔️ Se Connecter'}
           </button>
         </form>
 
-        <p className="auth-link">
-          Pas encore de compte ? <Link to="/register">S'inscrire</Link>
-        </p>
+        <div className="auth-footer">
+          <p>
+            Pas encore de compte ? <Link to="/register" className="auth-link">S'inscrire</Link>
+          </p>
+        </div>
+
+        {/* Hint for testing */}
+        <div className="auth-hint">
+          <p><small>💡 Compte de test : fantasy@nahb.com / password123</small></p>
+        </div>
       </div>
     </div>
   );

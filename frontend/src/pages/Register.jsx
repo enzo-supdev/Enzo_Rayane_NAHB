@@ -1,10 +1,11 @@
 import { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
+import './Auth.css';
 
 const Register = () => {
   const [formData, setFormData] = useState({
-    pseudo: '',
+    username: '',
     email: '',
     password: '',
     confirmPassword: '',
@@ -27,14 +28,13 @@ const Register = () => {
     e.preventDefault();
     setError('');
 
-    // Validation
     if (formData.password !== formData.confirmPassword) {
       setError('Les mots de passe ne correspondent pas');
       return;
     }
 
-    if (formData.password.length < 8) {
-      setError('Le mot de passe doit contenir au moins 8 caractères');
+    if (formData.password.length < 6) {
+      setError('Le mot de passe doit contenir au moins 6 caractères');
       return;
     }
 
@@ -53,28 +53,32 @@ const Register = () => {
 
   return (
     <div className="auth-container">
-      <div className="auth-card">
-        <h1>🎭 Inscription</h1>
+      <div className="auth-card card">
+        <div className="auth-header">
+          <h1>🎭 Inscription</h1>
+          <p>Rejoignez notre communauté d'aventuriers</p>
+        </div>
         
-        {error && <div className="error-message">{error}</div>}
+        {error && <div className="alert alert-error">{error}</div>}
         
-        <form onSubmit={handleSubmit}>
+        <form onSubmit={handleSubmit} className="auth-form">
           <div className="form-group">
-            <label htmlFor="pseudo">Pseudo</label>
+            <label htmlFor="username">⚜️ Nom d'Aventurier</label>
             <input
               type="text"
-              id="pseudo"
-              name="pseudo"
-              value={formData.pseudo}
+              id="username"
+              name="username"
+              value={formData.username}
               onChange={handleChange}
               required
               minLength={3}
               maxLength={30}
+              placeholder="Votre pseudonyme héroïque"
             />
           </div>
 
           <div className="form-group">
-            <label htmlFor="email">Email</label>
+            <label htmlFor="email">📧 Email</label>
             <input
               type="email"
               id="email"
@@ -82,11 +86,12 @@ const Register = () => {
               value={formData.email}
               onChange={handleChange}
               required
+              placeholder="votre@email.com"
             />
           </div>
 
           <div className="form-group">
-            <label htmlFor="password">Mot de passe</label>
+            <label htmlFor="password">🗝️ Mot de Passe</label>
             <input
               type="password"
               id="password"
@@ -94,12 +99,13 @@ const Register = () => {
               value={formData.password}
               onChange={handleChange}
               required
-              minLength={8}
+              minLength={6}
+              placeholder="Au moins 6 caractères"
             />
           </div>
 
           <div className="form-group">
-            <label htmlFor="confirmPassword">Confirmer le mot de passe</label>
+            <label htmlFor="confirmPassword">🗝️ Confirmer le Mot de Passe</label>
             <input
               type="password"
               id="confirmPassword"
@@ -107,30 +113,38 @@ const Register = () => {
               value={formData.confirmPassword}
               onChange={handleChange}
               required
+              placeholder="Répétez votre mot de passe"
             />
           </div>
 
           <div className="form-group">
-            <label htmlFor="role">Je souhaite être</label>
+            <label htmlFor="role">👤 Je souhaite être</label>
             <select
               id="role"
               name="role"
               value={formData.role}
               onChange={handleChange}
             >
-              <option value="reader">Lecteur</option>
-              <option value="author">Auteur</option>
+              <option value="reader">🎲 Lecteur / Aventurier</option>
+              <option value="author">✍️ Auteur / Conteur</option>
             </select>
+            <small className="form-hint">
+              {formData.role === 'reader' 
+                ? 'Vous pourrez lire et jouer aux histoires' 
+                : 'Vous pourrez créer vos propres histoires'}
+            </small>
           </div>
 
-          <button type="submit" disabled={loading} className="btn-primary">
-            {loading ? 'Inscription...' : 'S\'inscrire'}
+          <button type="submit" disabled={loading} className="btn btn-primary btn-block">
+            {loading ? '⏳ Inscription en cours...' : '⚔️ S\'inscrire'}
           </button>
         </form>
 
-        <p className="auth-link">
-          Déjà un compte ? <Link to="/login">Se connecter</Link>
-        </p>
+        <div className="auth-footer">
+          <p>
+            Déjà un compte ? <Link to="/login" className="auth-link">Se connecter</Link>
+          </p>
+        </div>
       </div>
     </div>
   );

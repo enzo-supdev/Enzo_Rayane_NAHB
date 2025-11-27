@@ -1,19 +1,27 @@
 import { Navigate } from 'react-router-dom';
 import { useAuth } from '../../hooks/useAuth';
 
-const ProtectedRoute = ({ children, roles = [] }) => {
+const ProtectedRoute = ({ children, requireAuthor, requireAdmin }) => {
   const { user, loading } = useAuth();
 
   if (loading) {
-    return <div>Chargement...</div>;
+    return (
+      <div className="flex items-center justify-center" style={{ minHeight: '100vh' }}>
+        <div className="loader"></div>
+      </div>
+    );
   }
 
   if (!user) {
     return <Navigate to="/login" replace />;
   }
 
-  if (roles.length > 0 && !roles.map(r => r.toUpperCase()).includes(user.role.toUpperCase())) {
-    return <Navigate to="/unauthorized" replace />;
+  if (requireAdmin && user.role !== 'admin') {
+    return <Navigate to="/" replace />;
+  }
+
+  if (requireAuthor && user.role !== 'author' && user.role !== 'admin') {
+    return <Navigate to="/" replace />;
   }
 
   return children;
