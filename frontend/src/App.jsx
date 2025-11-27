@@ -1,93 +1,105 @@
-﻿import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider } from './context/AuthContext';
 import ProtectedRoute from './components/auth/ProtectedRoute';
 
-// Pages
+// Public Pages
 import Home from './pages/Home';
 import Login from './pages/Login';
 import Register from './pages/Register';
 import StoryList from './pages/StoryList';
+import StoryDetails from './pages/StoryDetails';
 import StoryReader from './pages/StoryReader';
+
+// Author Pages
+import AuthorDashboard from './pages/AuthorDashboard';
 import StoryCreate from './pages/StoryCreate';
 import StoryEdit from './pages/StoryEdit';
-import AuthorDashboard from './pages/AuthorDashboard';
-import NotFound from './pages/NotFound';
-import Unauthorized from './pages/Unauthorized';
 
-import './App.css';
+// Admin Pages
+import AdminDashboard from './pages/AdminDashboard';
+
+// Styles
+import './styles/global.css';
 
 function App() {
   return (
-    <AuthProvider>
-      <Router>
-        <Routes>
-          {/* Routes publiques */}
-          <Route path="/" element={<Home />} />
-          <Route path="/login" element={<Login />} />
-          <Route path="/register" element={<Register />} />
-          
-          {/* Routes protégées */}
-          <Route
-            path="/stories"
-            element={
-              <ProtectedRoute>
-                <StoryList />
-              </ProtectedRoute>
-            }
-          />
-          
-          <Route
-            path="/stories/:id/read"
-            element={
-              <ProtectedRoute>
-                <StoryReader />
-              </ProtectedRoute>
-            }
-          />
+    <Router>
+      <AuthProvider>
+        <div className="app">
+          <Routes>
+            {/* Public Routes */}
+            <Route path="/" element={<Home />} />
+            <Route path="/login" element={<Login />} />
+            <Route path="/register" element={<Register />} />
+            <Route path="/stories" element={<StoryList />} />
+            <Route path="/stories/:id" element={<StoryDetails />} />
 
-          <Route
-            path="/stories/:storyId/edit"
-            element={
-              <ProtectedRoute roles={['author', 'admin']}>
-                <StoryEdit />
-              </ProtectedRoute>
-            }
-          />
-          
-          {/* Routes auteur */}
-          <Route
-            path="/dashboard"
-            element={
-              <ProtectedRoute roles={['author', 'admin']}>
-                <AuthorDashboard />
-              </ProtectedRoute>
-            }
-          />
+            {/* Protected Routes - Game */}
+            <Route
+              path="/play/:gameId"
+              element={
+                <ProtectedRoute>
+                  <StoryReader />
+                </ProtectedRoute>
+              }
+            />
 
-          <Route
-            path="/author/dashboard"
-            element={
-              <ProtectedRoute roles={['author', 'admin']}>
-                <AuthorDashboard />
-              </ProtectedRoute>
-            }
-          />
-          
-          <Route
-            path="/stories/create"
-            element={
-              <ProtectedRoute roles={['author', 'admin']}>
-                <StoryCreate />
-              </ProtectedRoute>
-            }
-          />
-          
-          {/* Erreurs */}
-          <Route path="/unauthorized" element={<Unauthorized />} />
-          <Route path="*" element={<NotFound />} />
-        </Routes>
-      </Router>
-    </AuthProvider>
+            {/* Protected Routes - Author */}
+            <Route
+              path="/author/dashboard"
+              element={
+                <ProtectedRoute requireAuthor>
+                  <AuthorDashboard />
+                </ProtectedRoute>
+              }
+            />
+
+            <Route
+              path="/author/create"
+              element={
+                <ProtectedRoute requireAuthor>
+                  <StoryCreate />
+                </ProtectedRoute>
+              }
+            />
+
+            <Route
+              path="/author/edit/:id"
+              element={
+                <ProtectedRoute requireAuthor>
+                  <StoryEdit />
+                </ProtectedRoute>
+              }
+            />
+
+            <Route
+              path="/author/stats/:id"
+              element={
+                <ProtectedRoute requireAuthor>
+                  <div className="container" style={{ padding: '2rem' }}>
+                    <h1>📊 Statistiques de l'Histoire</h1>
+                    <p>Statistiques détaillées en construction...</p>
+                  </div>
+                </ProtectedRoute>
+              }
+            />
+
+            {/* Protected Routes - Admin */}
+            <Route
+              path="/admin"
+              element={
+                <ProtectedRoute requireAdmin>
+                  <AdminDashboard />
+                </ProtectedRoute>
+              }
+            />
+
+            {/* Fallback */}
+            <Route path="*" element={<Navigate to="/" replace />} />
+          </Routes>
+        </div>
+      </AuthProvider>
+    </Router>
   );
 }
 

@@ -1,0 +1,108 @@
+.navbar {
+  background: linear-gradient(135deg, var(--bg-secondary) 0%, var(--bg-primary) 100%);
+  border-bottom: 3px solid var(--border-color);
+  box-shadow: var(--shadow-lg);
+  position: sticky;
+  top: 0;
+  z-index: var(--z-sticky);
+  backdrop-filter: blur(10px);
+}
+
+.navbar-content {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--spacing-md) 0;
+}
+
+.navbar-logo {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+  font-family: var(--font-title);
+  font-size: var(--font-size-2xl);
+  font-weight: 900;
+  color: var(--color-secondary);
+  text-decoration: none;
+  text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.8);
+  transition: all var(--transition-base);
+}
+
+.navbar-logo:hover {
+  transform: scale(1.05);
+  text-shadow: 0 0 10px var(--color-secondary);
+}
+
+.logo-icon {
+  font-size: var(--font-size-3xl);
+}
+
+.navbar-links {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-lg);
+}
+
+.nav-link {
+  font-family: var(--font-heading);
+  font-weight: 600;
+  font-size: var(--font-size-base);
+  color: var(--text-primary);
+  text-decoration: none;
+  padding: var(--spacing-sm) var(--spacing-md);
+  border-radius: var(--radius-sm);
+  transition: all var(--transition-base);
+  border: 2px solid transparent;
+}
+
+.nav-link:hover {
+  color: var(--color-secondary);
+  border-color: var(--color-secondary);
+  background: rgba(218, 165, 32, 0.1);
+  text-decoration: none;
+}
+
+.navbar-user {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-md);
+  padding: var(--spacing-sm) var(--spacing-md);
+  background: var(--bg-tertiary);
+  border: 2px solid var(--border-color);
+  border-radius: var(--radius-md);
+}
+
+.user-name {
+  font-family: var(--font-heading);
+  font-weight: 600;
+  color: var(--color-secondary);
+}
+
+.btn-logout {
+  padding: var(--spacing-xs) var(--spacing-md);
+  font-size: var(--font-size-sm);
+  background: linear-gradient(180deg, var(--color-accent-light), var(--color-accent-dark));
+  border-color: var(--color-accent-dark);
+}
+
+.btn-logout:hover {
+  background: linear-gradient(180deg, var(--color-accent), var(--color-accent-dark));
+}
+
+@media (max-width: 768px) {
+  .navbar-content {
+    flex-direction: column;
+    gap: var(--spacing-md);
+  }
+
+  .navbar-links {
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: var(--spacing-sm);
+  }
+
+  .navbar-user {
+    flex-direction: column;
+    gap: var(--spacing-sm);
+  }
+}

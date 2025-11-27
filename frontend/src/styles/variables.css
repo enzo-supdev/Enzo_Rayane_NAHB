@@ -1,39 +1,52 @@
-/* Variables CSS - Thème Chevalier Médiéval */
+/* ========================================
+   THÈME MÉDIÉVAL - Variables CSS
+   ======================================== */
+
 :root {
-  /* Couleurs principales */
-  --color-gold: #d4af37;
-  --color-gold-light: #ffd700;
-  --color-gold-dark: #b8941f;
+  /* Couleurs principales - Palette médiévale */
+  --color-primary: #8b4513;        /* Marron bois */
+  --color-primary-dark: #5c2e0a;   /* Marron foncé */
+  --color-primary-light: #a0522d;  /* Sienna */
   
-  --color-bronze: #8b6914;
-  --color-bronze-dark: #6b5410;
+  --color-secondary: #daa520;      /* Or médiéval */
+  --color-secondary-dark: #b8860b; /* Or foncé */
+  --color-secondary-light: #ffd700; /* Or clair */
   
-  --color-brown-dark: #2d1810;
-  --color-brown-darker: #1a0f08;
-  --color-brown-medium: #4a2c1f;
-  --color-brown-light: #5c3828;
+  --color-accent: #8b0000;         /* Rouge sang */
+  --color-accent-dark: #660000;
+  --color-accent-light: #a52a2a;
   
-  --color-parchment: #e8dcc4;
-  --color-parchment-light: #f4e9d8;
-  --color-parchment-lighter: #f5e6d3;
-  --color-parchment-darker: #d4c8b0;
+  /* Couleurs de fond */
+  --bg-primary: #1a1410;           /* Presque noir, couleur parchemin brûlé */
+  --bg-secondary: #2a1f1a;         /* Marron très foncé */
+  --bg-tertiary: #3d2817;          /* Marron moyen */
+  --bg-paper: #f4e4c1;             /* Couleur parchemin */
+  --bg-paper-dark: #e8d4a8;
   
-  --color-blue-dark: #1a1a2e;
-  --color-blue-medium: #16213e;
-  --color-blue-light: #0f3460;
+  /* Couleurs de texte */
+  --text-primary: #f4e4c1;         /* Beige clair pour texte sur fond sombre */
+  --text-secondary: #d4c4a1;       /* Beige moyen */
+  --text-muted: #a49681;           /* Beige foncé */
+  --text-dark: #2a1f1a;            /* Marron foncé pour texte sur fond clair */
   
-  --color-red-dark: #8b1a1a;
-  --color-red-medium: #a82020;
-  --color-red-light: #c92828;
+  /* Bordures et ombres */
+  --border-color: #8b4513;
+  --border-light: #a0522d;
+  --shadow-sm: 0 2px 4px rgba(0, 0, 0, 0.5);
+  --shadow-md: 0 4px 8px rgba(0, 0, 0, 0.6);
+  --shadow-lg: 0 8px 16px rgba(0, 0, 0, 0.7);
+  --shadow-xl: 0 16px 32px rgba(0, 0, 0, 0.8);
   
-  --color-green-dark: #2d6b1a;
-  --color-green-medium: #4a8c2a;
-  --color-green-light: #5ca838;
+  /* Effet parchemin */
+  --shadow-paper: 
+    inset 0 0 20px rgba(139, 69, 19, 0.1),
+    0 2px 5px rgba(0, 0, 0, 0.3);
   
-  /* Typographie */
-  --font-medieval: 'Cinzel', 'Times New Roman', serif;
-  --font-serif: 'Georgia', 'Times New Roman', serif;
-  --font-sans: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  /* États */
+  --color-success: #4a7c3c;        /* Vert forêt */
+  --color-warning: #daa520;        /* Or */
+  --color-error: #8b0000;          /* Rouge sang */
+  --color-info: #4682b4;           /* Bleu acier */
   
   /* Espacements */
   --spacing-xs: 0.25rem;
@@ -43,27 +56,38 @@
   --spacing-xl: 2rem;
   --spacing-2xl: 3rem;
   
-  /* Bordures */
-  --border-thin: 2px;
-  --border-medium: 3px;
-  --border-thick: 4px;
-  --border-radius: 6px;
-  --border-radius-large: 10px;
+  /* Typographie */
+  --font-title: 'Cinzel Decorative', serif;
+  --font-heading: 'Cinzel', serif;
+  --font-body: 'IM Fell English', serif;
+  --font-system: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
   
-  /* Ombres */
-  --shadow-small: 0 4px 8px rgba(0, 0, 0, 0.3);
-  --shadow-medium: 0 8px 20px rgba(0, 0, 0, 0.4);
-  --shadow-large: 0 15px 40px rgba(0, 0, 0, 0.5);
-  --shadow-gold: 0 0 15px rgba(212, 175, 55, 0.3);
-  --shadow-gold-hover: 0 6px 12px rgba(212, 175, 55, 0.4);
+  --font-size-xs: 0.75rem;
+  --font-size-sm: 0.875rem;
+  --font-size-base: 1rem;
+  --font-size-lg: 1.125rem;
+  --font-size-xl: 1.25rem;
+  --font-size-2xl: 1.5rem;
+  --font-size-3xl: 2rem;
+  --font-size-4xl: 2.5rem;
+  
+  /* Bordures */
+  --radius-sm: 2px;
+  --radius-md: 4px;
+  --radius-lg: 8px;
+  --radius-xl: 12px;
   
   /* Transitions */
-  --transition-fast: 0.2s ease;
-  --transition-normal: 0.3s ease;
-  --transition-slow: 0.5s ease;
+  --transition-fast: 150ms ease;
+  --transition-base: 250ms ease;
+  --transition-slow: 350ms ease;
   
   /* Z-index */
-  --z-navbar: 1000;
-  --z-modal: 2000;
-  --z-tooltip: 3000;
+  --z-dropdown: 1000;
+  --z-sticky: 1020;
+  --z-fixed: 1030;
+  --z-modal-backdrop: 1040;
+  --z-modal: 1050;
+  --z-popover: 1060;
+  --z-tooltip: 1070;
 }
