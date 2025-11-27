@@ -30,7 +30,7 @@ exports.banUser = async (req, res) => {
     }
 
     // Ne pas bannir un autre admin
-    if (user.role === 'admin') {
+    if (user.role === 'ADMIN') {
       return res.status(403).json({
         success: false,
         message: 'Vous ne pouvez pas bannir un administrateur'

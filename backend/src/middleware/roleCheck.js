@@ -6,7 +6,10 @@
       });
     }
 
-    if (!allowedRoles.includes(req.user.role.toLowerCase())) {
+    // Normaliser les rôles en majuscules pour comparaison
+    const normalizedAllowedRoles = allowedRoles.map(role => role.toUpperCase());
+    
+    if (!normalizedAllowedRoles.includes(req.user.role)) {
       return res.status(403).json({ 
         message: 'Accès non autorisé' 
       });

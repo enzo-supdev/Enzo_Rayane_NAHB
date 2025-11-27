@@ -150,7 +150,7 @@ exports.getPageById = async (req, res) => {
  */
 exports.createPage = async (req, res) => {
   try {
-    const { storyId, title, content, isEnd, endLabel, imageUrl } = req.body;
+    const { storyId, title, content, isEnd, endingLabel, imageUrl } = req.body;
 
     // Validation
     if (!storyId || !content) {
@@ -185,7 +185,7 @@ exports.createPage = async (req, res) => {
         title: title || null,
         content,
         isEnd: isEnd || false,
-        endLabel: endLabel || null,
+        endingLabel: endingLabel || null,
         imageUrl: imageUrl || null
       },
       include: {
@@ -221,7 +221,7 @@ exports.createPage = async (req, res) => {
 exports.updatePage = async (req, res) => {
   try {
     const { id } = req.params;
-    const { title, content, isEnd, endLabel, imageUrl } = req.body;
+    const { title, content, isEnd, endingLabel, imageUrl } = req.body;
 
     // Vérifier que la page existe
     const page = await prisma.page.findUnique({
@@ -252,7 +252,7 @@ exports.updatePage = async (req, res) => {
         ...(title !== undefined && { title }),
         ...(content && { content }),
         ...(isEnd !== undefined && { isEnd }),
-        ...(endLabel !== undefined && { endLabel }),
+        ...(endingLabel !== undefined && { endingLabel }),
         ...(imageUrl !== undefined && { imageUrl })
       },
       include: {

@@ -83,7 +83,7 @@ exports.updateReportStatus = async (req, res) => {
     const { reportId } = req.params;
     const { status } = req.body;
 
-    if (!['PENDING', 'RESOLVED', 'REJECTED'].includes(status)) {
+    if (!['PENDING', 'RESOLVED', 'DISMISSED'].includes(status)) {
       return res.status(400).json({ message: 'Statut invalide' });
     }
 
