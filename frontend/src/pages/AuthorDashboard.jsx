@@ -1,157 +1,203 @@
-import React, { useState, useEffect, useContext } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { useState, useEffect } from 'react';
+import { Link } from 'react-router-dom';
+import { useAuth } from '../context/AuthContext';
 import storyService from '../services/storyService';
-import { AuthContext } from '../context/AuthContext';
+import statisticsService from '../services/statisticsService';
 import Navbar from '../components/common/Navbar';
+import './AuthorDashboard.css';
 
-export default function AuthorDashboard() {
-  const { user, isAuthenticated } = useContext(AuthContext);
-  const navigate = useNavigate();
+const AuthorDashboard = () => {
+  const { user, loading: authLoading } = useAuth();
   const [stories, setStories] = useState([]);
+  const [stats, setStats] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
-  const [filter, setFilter] = useState('all'); // all, draft, published
 
   useEffect(() => {
-    if (!isAuthenticated) {
-      navigate('/login');
-      return;
+    if (user && !authLoading) {
+      fetchData();
     }
-    if (user?.role !== 'AUTHOR' && user?.role !== 'ADMIN') {
-      navigate('/');
-      return;
-    }
-    fetchStories();
-  }, [user, isAuthenticated, navigate]);
+  }, [user, authLoading]);
 
-  const fetchStories = async () => {
+  const fetchData = async () => {
+    if (!user) return;
+    
     try {
       setLoading(true);
-      const response = await storyService.getMyStories();
-      setStories(response.data?.stories || response.stories || []);
+      const [storiesData, statsData] = await Promise.all([
+        storyService.getMyStories(),
+        statisticsService.getAuthorStatistics(user.id),
+      ]);
+      setStories(storiesData.data || []);
+      setStats(statsData.data);
     } catch (err) {
-      console.error('Erreur:', err);
-      setError('Erreur lors du chargement de vos histoires');
+      console.error(err);
+      setError('Erreur lors du chargement des données');
     } finally {
       setLoading(false);
     }
   };
 
-  const handleDelete = async (storyId) => {
-    if (!window.confirm('Êtes-vous sûr ? Cette action est irréversible.')) return;
+  const handleDeleteStory = async (storyId) => {
+    if (!window.confirm('Êtes-vous sûr de vouloir supprimer cette histoire ?')) {
+      return;
+    }
 
     try {
       await storyService.deleteStory(storyId);
-      setStories(stories.filter(s => s.id !== storyId));
+      setStories(stories.filter((s) => s._id !== storyId));
     } catch (err) {
-      setError('Erreur lors de la suppression');
+      console.error(err);
+      alert('Erreur lors de la suppression');
     }
   };
 
-  const filteredStories = stories.filter(story => {
-    if (filter === 'draft') return story.status === 'DRAFT';
-    if (filter === 'published') return story.status === 'PUBLISHED';
-    return true;
-  });
+  if (authLoading || loading) {
+    return (
+      <>
+        <Navbar />
+        <div className="page-container">
+          <div className="loader"></div>
+        </div>
+      </>
+    );
+  }
+
+  if (!user) {
+    return (
+      <>
+        <Navbar />
+        <div className="page-container">
+          <div className="container">
+            <div className="alert alert-error">Vous devez être connecté</div>
+          </div>
+        </div>
+      </>
+    );
+  }
 
   return (
     <>
       <Navbar />
       <div className="page-container">
-        <div className="page-header">
-          <h1>👨‍✍️ Mes Histoires</h1>
-          <p>Bienvenue, {user?.pseudo || 'Auteur'}</p>
-        </div>
-
-        {error && <div className="error-message">{error}</div>}
-
-        <div className="dashboard-actions">
-          <Link to="/stories/create" className="btn-primary">
-            + Créer une nouvelle histoire
-          </Link>
-        </div>
-
-        {/* Filtres */}
-        <div className="filter-bar">
-          <button 
-            className={`filter-btn ${filter === 'all' ? 'active' : ''}`}
-            onClick={() => setFilter('all')}
-          >
-            Toutes ({stories.length})
-          </button>
-          <button 
-            className={`filter-btn ${filter === 'draft' ? 'active' : ''}`}
-            onClick={() => setFilter('draft')}
-          >
-            Brouillons ({stories.filter(s => s.status === 'DRAFT').length})
-          </button>
-          <button 
-            className={`filter-btn ${filter === 'published' ? 'active' : ''}`}
-            onClick={() => setFilter('published')}
-          >
-            Publiées ({stories.filter(s => s.status === 'PUBLISHED').length})
-          </button>
-        </div>
-
-        {loading ? (
-          <div className="loading">Chargement de vos histoires...</div>
-        ) : filteredStories.length === 0 ? (
-          <div className="empty-state">
-            <h2>Aucune histoire pour le moment</h2>
-            <p>Créez votre première histoire interactive !</p>
-            <Link to="/stories/create" className="btn-primary">
-              Créer une histoire
+        <div className="container">
+          <div className="dashboard-header">
+            <h1>✍️ Mon Atelier d'Auteur</h1>
+            <Link to="/author/create" className="btn btn-primary">
+              ➕ Nouvelle Histoire
             </Link>
           </div>
-        ) : (
-          <div className="stories-dashboard-grid">
-            {filteredStories.map(story => (
-              <div key={story.id} className="story-dashboard-card">
-                <div className="card-header">
-                  <h3>{story.title}</h3>
-                  <span className={`status-badge ${story.status.toLowerCase()}`}>
-                    {story.status === 'DRAFT' ? '📝 Brouillon' : '📖 Publié'}
-                  </span>
-                </div>
 
-                <p className="card-description">{story.description}</p>
+          {error && <div className="alert alert-error">{error}</div>}
 
-                <div className="card-stats">
-                  <div className="stat">
-                    <span className="stat-value">
-                      {story.pages?.length || 0}
-                    </span>
-                    <span className="stat-label">Pages</span>
-                  </div>
-                </div>
-
-                <div className="card-actions">
-                  <Link 
-                    to={`/stories/${story.id}/edit`}
-                    className="btn-small btn-primary"
-                  >
-                    ✏️ Éditer
-                  </Link>
-                  {story.status === 'PUBLISHED' && (
-                    <Link 
-                      to={`/stories/${story.id}/stats`}
-                      className="btn-small"
-                    >
-                      📊 Stats
-                    </Link>
-                  )}
-                  <button 
-                    className="btn-small btn-danger"
-                    onClick={() => handleDelete(story.id)}
-                  >
-                    🗑️ Supprimer
-                  </button>
+          {/* Statistics Overview */}
+          {stats && (
+            <div className="stats-overview">
+              <div className="stat-card">
+                <div className="stat-icon">📚</div>
+                <div className="stat-content">
+                  <div className="stat-value">{stats.totalStories || 0}</div>
+                  <div className="stat-label">Histoires</div>
                 </div>
               </div>
-            ))}
+
+              <div className="stat-card">
+                <div className="stat-icon">🎮</div>
+                <div className="stat-content">
+                  <div className="stat-value">{stats.totalPlays || 0}</div>
+                  <div className="stat-label">Parties Jouées</div>
+                </div>
+              </div>
+
+              <div className="stat-card">
+                <div className="stat-icon">✅</div>
+                <div className="stat-content">
+                  <div className="stat-value">{stats.totalCompletions || 0}</div>
+                  <div className="stat-label">Complétées</div>
+                </div>
+              </div>
+
+              <div className="stat-card">
+                <div className="stat-icon">⭐</div>
+                <div className="stat-content">
+                  <div className="stat-value">{stats.averageRating?.toFixed(1) || 'N/A'}</div>
+                  <div className="stat-label">Note Moyenne</div>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Stories List */}
+          <div className="stories-section">
+            <h2>📖 Mes Histoires</h2>
+
+            {stories.length === 0 ? (
+              <div className="empty-state card">
+                <p className="empty-icon">✍️</p>
+                <h3>Aucune histoire créée</h3>
+                <p>Commencez votre première aventure !</p>
+                <Link to="/author/create" className="btn btn-primary">
+                  Créer une Histoire
+                </Link>
+              </div>
+            ) : (
+              <div className="author-stories-grid">
+                {stories.map((story) => (
+                  <div key={story._id} className="author-story-card card-dark">
+                    <div className="story-card-header">
+                      <h3>{story.title}</h3>
+                      <span className={`status-badge status-${story.status}`}>
+                        {story.status === 'published' ? '✅ Publié' : '📝 Brouillon'}
+                      </span>
+                    </div>
+
+                    <p className="story-description-short">
+                      {story.description?.substring(0, 100)}
+                      {story.description?.length > 100 ? '...' : ''}
+                    </p>
+
+                    <div className="story-mini-stats">
+                      <span>🎮 {story.totalPlays || 0}</span>
+                      <span>✅ {story.totalCompletions || 0}</span>
+                      <span>⭐ {story.averageRating?.toFixed(1) || 'N/A'}</span>
+                      <span>📖 {story.pages?.length || 0} pages</span>
+                    </div>
+
+                    <div className="story-actions">
+                      <Link
+                        to={`/author/edit/${story._id}`}
+                        className="btn btn-secondary btn-sm"
+                      >
+                        ✏️ Éditer
+                      </Link>
+                      <Link
+                        to={`/author/stats/${story._id}`}
+                        className="btn btn-secondary btn-sm"
+                      >
+                        📊 Stats
+                      </Link>
+                      <Link
+                        to={`/stories/${story._id}`}
+                        className="btn btn-secondary btn-sm"
+                      >
+                        👁️ Voir
+                      </Link>
+                      <button
+                        onClick={() => handleDeleteStory(story._id)}
+                        className="btn btn-danger btn-sm"
+                      >
+                        🗑️
+                      </button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
-        )}
+        </div>
       </div>
     </>
   );
-}
+};
+
+export default AuthorDashboard;
