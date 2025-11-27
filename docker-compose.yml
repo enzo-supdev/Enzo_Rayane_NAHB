@@ -2,25 +2,24 @@ version: '3.8'
 
 services:
   # ============================================
-  # Base de données MySQL
+  # Base de données MongoDB
   # ============================================
-  db:
-    image: mysql:8.0
-    container_name: nahb_mysql
+  mongodb:
+    image: mongo:6
+    container_name: nahb_mongodb
     environment:
-      MYSQL_ROOT_PASSWORD: root
-      MYSQL_DATABASE: nahb_db
-      MYSQL_USER: nahb_user
-      MYSQL_PASSWORD: nahb_password
-      MYSQL_INITDB_SKIP_TZINFO: "yes"
+      MONGO_INITDB_ROOT_USERNAME: admin
+      MONGO_INITDB_ROOT_PASSWORD: admin123
+      MONGO_INITDB_DATABASE: nahb
     ports:
-      - "3306:3306"
+      - "27017:27017"
     volumes:
-      - mysql_data:/var/lib/mysql
+      - mongodb_data:/data/db
     healthcheck:
-      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
-      timeout: 20s
-      retries: 10
+      test: echo 'db.runCommand("ping").ok' | mongosh localhost:27017/nahb --quiet
+      interval: 10s
+      timeout: 5s
+      retries: 5
     networks:
       - nahb_network
 
@@ -35,18 +34,22 @@ services:
     ports:
       - "5000:5000"
     depends_on:
-      db:
+      mongodb:
         condition: service_healthy
     environment:
       NODE_ENV: development
-      DATABASE_URL: mysql://nahb_user:nahb_password@db:3306/nahb_db
-      SHADOW_DATABASE_URL: mysql://nahb_user:nahb_password@db:3306/nahb_db_shadow
-      JWT_SECRET: your-secret-key-change-in-production
+      MONGODB_URI: mongodb://admin:admin123@mongodb:27017/nahb?authSource=admin
+      JWT_SECRET: nahb_super_secret_key_2025_change_in_production
+      JWT_EXPIRE: 7d
       PORT: 5000
-      CORS_ORIGIN: http://localhost:3000
+      CORS_ORIGIN: http://localhost:5173
+      MAX_FILE_SIZE: 5242880
+      RATE_LIMIT_WINDOW_MS: 900000
+      RATE_LIMIT_MAX_REQUESTS: 100
     volumes:
       - ./backend:/app
       - /app/node_modules
+      - backend_uploads:/app/uploads
     command: npm run dev
     networks:
       - nahb_network
@@ -60,20 +63,22 @@ services:
       dockerfile: Dockerfile
     container_name: nahb_frontend
     ports:
-      - "3000:3000"
+      - "5173:5173"
     depends_on:
       - backend
     environment:
-      VITE_API_URL: http://backend:5000/api
+      VITE_API_URL: http://localhost:5000/api
     volumes:
       - ./frontend:/app
       - /app/node_modules
-    command: npm run dev
+    command: npm run dev -- --host
     networks:
       - nahb_network
 
 volumes:
-  mysql_data:
+  mongodb_data:
+    driver: local
+  backend_uploads:
     driver: local
 
 networks:
