@@ -1,33 +1,37 @@
 import api from './api';
 
 const pageService = {
-  // Récupérer les pages d'une histoire
-  getPagesByStory: async (storyId) => {
-    const response = await api.get(`/pages/story/${storyId}`);
+  // Get page details
+  getPage: async (pageId) => {
+    const response = await api.get(`/pages/${pageId}`);
     return response.data;
   },
 
-  // Récupérer une page par ID avec ses choix
-  getPageById: async (id) => {
-    const response = await api.get(`/pages/${id}`);
+  // Create page
+  createPage: async (storyId, pageData) => {
+    const response = await api.post('/pages', { ...pageData, story: storyId });
     return response.data;
   },
 
-  // Créer une page
-  createPage: async (pageData) => {
-    const response = await api.post('/pages', pageData);
+  // Update page
+  updatePage: async (pageId, pageData) => {
+    const response = await api.put(`/pages/${pageId}`, pageData);
     return response.data;
   },
 
-  // Mettre à jour une page
-  updatePage: async (id, pageData) => {
-    const response = await api.put(`/pages/${id}`, pageData);
+  // Delete page
+  deletePage: async (pageId) => {
+    const response = await api.delete(`/pages/${pageId}`);
     return response.data;
   },
 
-  // Supprimer une page
-  deletePage: async (id) => {
-    const response = await api.delete(`/pages/${id}`);
+  // Upload page image
+  uploadImage: async (pageId, file) => {
+    const formData = new FormData();
+    formData.append('image', file);
+    const response = await api.post(`/pages/${pageId}/image`, formData, {
+      headers: { 'Content-Type': 'multipart/form-data' },
+    });
     return response.data;
   },
 };

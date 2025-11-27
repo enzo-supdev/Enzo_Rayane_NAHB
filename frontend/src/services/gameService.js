@@ -1,34 +1,33 @@
 import api from './api';
 
 const gameService = {
-  // Démarrer une session de jeu
+  // Start a new game
   startGame: async (storyId) => {
-    const response = await api.post('/game/start', { storyId });
+    const response = await api.post('/games/start', { storyId });
     return response.data;
   },
 
-  // Faire un choix
-  makeChoice: async (journeyId, choiceId) => {
-    const response = await api.post('/game/choice', { journeyId, choiceId });
+  // Make a choice
+  makeChoice: async (gameId, choiceId) => {
+    const response = await api.post(`/games/${gameId}/choice`, { choiceId });
     return response.data;
   },
 
-  // Récupérer mes sessions
-  getMySessions: async (storyId = null) => {
-    const params = storyId ? `?storyId=${storyId}` : '';
-    const response = await api.get(`/game/sessions${params}`);
+  // Get game state
+  getGame: async (gameId) => {
+    const response = await api.get(`/games/${gameId}`);
     return response.data;
   },
 
-  // Récupérer une session par ID
-  getSessionById: async (id) => {
-    const response = await api.get(`/game/sessions/${id}`);
+  // Get my games
+  getMyGames: async () => {
+    const response = await api.get('/games/my/games');
     return response.data;
   },
 
-  // Récupérer les fins déverrouillées
-  getUnlockedEndings: async (storyId) => {
-    const response = await api.get(`/game/unlocked-endings/${storyId}`);
+  // Roll dice
+  rollDice: async (gameId, diceType) => {
+    const response = await api.post(`/games/${gameId}/dice`, { diceType });
     return response.data;
   },
 };
