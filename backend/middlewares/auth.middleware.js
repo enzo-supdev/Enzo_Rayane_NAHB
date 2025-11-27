@@ -86,3 +86,37 @@ export const checkOwnership = (Model) => {
     }
   };
 };
+
+// Optional authentication - doesn't fail if no token
+export const optionalAuth = async (req, res, next) => {
+  try {
+    let token;
+
+    // Check for token in Authorization header
+    if (req.headers.authorization && req.headers.authorization.startsWith('Bearer')) {
+      token = req.headers.authorization.split(' ')[1];
+    }
+
+    if (token) {
+      try {
+        // Verify token
+        const decoded = jwt.verify(token, process.env.JWT_SECRET);
+
+        // Get user from token
+        req.user = await User.findById(decoded.id).select('-password');
+
+        // Check if user is banned
+        if (req.user && req.user.isBanned) {
+          req.user = null; // Clear user if banned
+        }
+      } catch (error) {
+        // Token invalid, but we don't fail - just continue without user
+        req.user = null;
+      }
+    }
+
+    next();
+  } catch (error) {
+    next(error);
+  }
+};

@@ -50,7 +50,13 @@ export const startGame = asyncHandler(async (req, res, next) => {
 
   const populatedGame = await Game.findById(game._id)
     .populate('story', 'title description coverImage')
-    .populate('currentPage');
+    .populate({
+      path: 'currentPage',
+      populate: {
+        path: 'choices',
+        select: 'text targetPage requiresDice diceCondition'
+      }
+    });
 
   res.status(201).json({
     success: true,
@@ -138,7 +144,13 @@ export const makeChoice = asyncHandler(async (req, res, next) => {
   await game.save();
 
   const populatedGame = await Game.findById(game._id)
-    .populate('currentPage')
+    .populate({
+      path: 'currentPage',
+      populate: {
+        path: 'choices',
+        select: 'text targetPage requiresDice diceCondition'
+      }
+    })
     .populate({
       path: 'path.choice',
       select: 'text'
@@ -157,7 +169,13 @@ export const makeChoice = asyncHandler(async (req, res, next) => {
 export const getGame = asyncHandler(async (req, res, next) => {
   const game = await Game.findById(req.params.id)
     .populate('story', 'title description coverImage')
-    .populate('currentPage')
+    .populate({
+      path: 'currentPage',
+      populate: {
+        path: 'choices',
+        select: 'text targetPage requiresDice diceCondition'
+      }
+    })
     .populate('endingReached')
     .populate({
       path: 'path.page',

@@ -47,6 +47,12 @@ const storyService = {
     });
     return response.data;
   },
+
+  // Get story pages
+  getStoryPages: async (id) => {
+    const response = await api.get(`/stories/${id}/pages`);
+    return response.data;
+  },
 };
 
 export default storyService;

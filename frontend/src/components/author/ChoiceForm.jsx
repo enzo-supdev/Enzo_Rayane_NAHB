@@ -43,7 +43,7 @@ function ChoiceForm({ pages, onSave, onCancel }) {
   };
 
   return (
-    <form onSubmit={handleSubmit} className="choice-form">
+    <div className="choice-form">
       <h3>➕ Ajouter un Choix</h3>
 
       <div className="form-group">
@@ -133,11 +133,11 @@ function ChoiceForm({ pages, onSave, onCancel }) {
         <button type="button" className="btn btn-tertiary btn-sm" onClick={onCancel}>
           ❌ Annuler
         </button>
-        <button type="submit" className="btn btn-primary btn-sm">
+        <button type="button" className="btn btn-primary btn-sm" onClick={handleSubmit}>
           ✅ Ajouter
         </button>
       </div>
-    </form>
+    </div>
   );
 }
 

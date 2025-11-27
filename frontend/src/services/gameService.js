@@ -9,7 +9,7 @@ const gameService = {
 
   // Make a choice
   makeChoice: async (gameId, choiceId) => {
-    const response = await api.post(`/games/${gameId}/choice`, { choiceId });
+    const response = await api.post(`/games/${gameId}/choose`, { choiceId });
     return response.data;
   },
 
@@ -21,13 +21,13 @@ const gameService = {
 
   // Get my games
   getMyGames: async () => {
-    const response = await api.get('/games/my/games');
+    const response = await api.get('/games/my/all');
     return response.data;
   },
 
   // Roll dice
   rollDice: async (gameId, diceType) => {
-    const response = await api.post(`/games/${gameId}/dice`, { diceType });
+    const response = await api.post('/games/dice/roll', { gameId, diceType });
     return response.data;
   },
 };

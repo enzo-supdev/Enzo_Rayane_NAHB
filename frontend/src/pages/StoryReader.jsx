@@ -47,8 +47,8 @@ const StoryReader = () => {
       setError('');
 
       const data = await gameService.makeChoice(gameId, choice._id);
-      setGame(data.data.game);
-      setCurrentPage(data.data.game.currentPage);
+      setGame(data.data);
+      setCurrentPage(data.data.currentPage);
       setDiceRoll(null); // Reset dice after choice
 
       // Scroll to top smoothly
@@ -225,7 +225,7 @@ const StoryReader = () => {
             <div className="choices-section">
               <h3 className="choices-title">⚔️ Que faites-vous ?</h3>
               <div className="choices-list">
-                {currentPage.choices.map((choice) => {
+                {currentPage.choices.map((choice, index) => {
                   const needsDice = choice.requiresDice;
                   const hasCondition = choice.diceCondition;
                   const meetsCondition = !needsDice || (diceRoll && 
@@ -234,7 +234,7 @@ const StoryReader = () => {
 
                   return (
                     <button
-                      key={choice._id}
+                      key={choice._id || `choice-${index}`}
                       onClick={() => handleChoice(choice)}
                       disabled={makingChoice || (needsDice && !meetsCondition)}
                       className={`choice-btn ${needsDice ? 'choice-dice' : ''} ${!meetsCondition && needsDice ? 'choice-locked' : ''}`}

@@ -10,7 +10,7 @@ import {
   getStoryPages,
   uploadCover
 } from '../controllers/story.controller.js';
-import { protect, isAuthor } from '../middlewares/auth.middleware.js';
+import { protect, isAuthor, optionalAuth } from '../middlewares/auth.middleware.js';
 import { validate } from '../middlewares/validation.middleware.js';
 import { upload } from '../middlewares/upload.middleware.js';
 import { createLimiter } from '../middlewares/rateLimiter.middleware.js';
@@ -28,14 +28,16 @@ const createStoryValidation = [
 
 // Public routes
 router.get('/', getStories);
-router.get('/:id', getStory);
 
-// Protected routes (Author)
+// Protected routes (Author) - IMPORTANT: Ces routes spécifiques doivent venir AVANT les routes avec :id
+router.get('/my/all', protect, isAuthor, getMyStories);
 router.post('/', protect, isAuthor, createLimiter, createStoryValidation, validate, createStory);
+
+// Routes avec paramètre :id (doivent venir APRÈS les routes spécifiques)
+router.get('/:id', optionalAuth, getStory);
+router.get('/:id/pages', optionalAuth, getStoryPages);
 router.put('/:id', protect, updateStory);
 router.delete('/:id', protect, deleteStory);
-router.get('/my/all', protect, isAuthor, getMyStories);
-router.get('/:id/pages', getStoryPages);
 router.post('/:id/cover', protect, upload.single('cover'), uploadCover);
 
 export default router;

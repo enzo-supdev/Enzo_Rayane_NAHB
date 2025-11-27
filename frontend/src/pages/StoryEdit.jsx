@@ -28,8 +28,8 @@ function StoryEdit() {
         storyService.getStory(id),
         pageService.getPagesByStory(id)
       ]);
-      setStory(storyData);
-      setPages(pagesData);
+      setStory(storyData.data);
+      setPages(pagesData.data || []);
     } catch (err) {
       setError('Erreur lors du chargement');
       console.error(err);
