@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NAHB API Documentation - Swagger UI</title>
+    <link rel="stylesheet" type="text/css" href="https://cdnjs.cloudflare.com/ajax/libs/swagger-ui/5.0.0/swagger-ui.min.css">
+    <link rel="icon" type="image/png" href="https://fastapi.tiangolo.com/img/favicon.png" sizes="32x32">
+    <style>
+        html {
+            box-sizing: border-box;
+            overflow: -moz-scrollbars-vertical;
+            overflow-y: scroll;
+        }
+        *,
+        *:before,
+        *:after {
+            box-sizing: inherit;
+        }
+        body {
+            margin: 0;
+            padding: 0;
+            background: #f5f5f5;
+        }
+        .topbar {
+            background-color: #1e293b;
+            padding: 10px 0;
+            border-bottom: 2px solid #10b981;
+        }
+        .topbar-content {
+            max-width: 1460px;
+            margin: 0 auto;
+            padding: 10px 20px;
+            color: white;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 20px;
+        }
+        .topbar-logo {
+            font-size: 20px;
+            color: #10b981;
+        }
+        .topbar-info {
+            margin-left: auto;
+            font-size: 12px;
+            opacity: 0.8;
+        }
+    </style>
+</head>
+<body>
+    <div class="topbar">
+        <div class="topbar-content">
+            <span class="topbar-logo">📚 NAHB - Not Another Hero's Book</span>
+            <span class="topbar-info">v1.0.0 | Documentation Interactive API</span>
+        </div>
+    </div>
+    <div id="swagger-ui"></div>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/swagger-ui/5.0.0/swagger-ui.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/swagger-ui/5.0.0/swagger-ui-bundle.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/swagger-ui/5.0.0/swagger-ui-standalone-preset.min.js"></script>
+    <script>
+        window.onload = function() {
+            // Charger le fichier swagger.json depuis le serveur
+            const ui = SwaggerUIBundle({
+                url: "http://localhost:5000/swagger.json",
+                dom_id: '#swagger-ui',
+                deepLinking: true,
+                presets: [
+                    SwaggerUIBundle.presets.apis,
+                    SwaggerUIStandalonePreset
+                ],
+                plugins: [
+                    SwaggerUIBundle.plugins.DownloadUrl
+                ],
+                layout: "StandaloneLayout",
+                persistAuthorization: true,
+                docExpansion: "list",
+                filter: true,
+                showRequestHeaders: true,
+                tryItOutEnabled: true,
+                requestInterceptor: (request) => {
+                    // Afficher les détails des requêtes
+                    console.log("Request:", request);
+                    return request;
+                },
+                responseInterceptor: (response) => {
+                    // Afficher les détails des réponses
+                    console.log("Response:", response);
+                    return response;
+                }
+            })
+            window.ui = ui
+        }
+    </script>
+</body>
+</html>
