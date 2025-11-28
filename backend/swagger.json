@@ -199,22 +199,24 @@
           },
           "404": { "description": "Utilisateur non trouvé" }
         }
-      },
+      }
+    },
+    "/users/profile": {
       "put": {
         "tags": ["Users"],
-        "summary": "Mettre à jour le profil",
+        "summary": "Mettre à jour mon profil",
         "security": [{ "bearerAuth": [] }],
-        "parameters": [
-          { "name": "id", "in": "path", "required": true, "schema": { "type": "string" } }
-        ],
+        "description": "Mettre à jour le profil de l'utilisateur connecté",
         "requestBody": {
+          "required": true,
           "content": {
             "application/json": {
               "schema": {
                 "type": "object",
                 "properties": {
-                  "username": { "type": "string", "minLength": 3, "maxLength": 30 },
-                  "email": { "type": "string", "format": "email" }
+                  "username": { "type": "string", "minLength": 3, "maxLength": 30, "example": "nouveau_username" },
+                  "email": { "type": "string", "format": "email", "example": "newemail@example.com" },
+                  "bio": { "type": "string", "maxLength": 500, "example": "Mon biography" }
                 }
               }
             }
@@ -223,7 +225,7 @@
         "responses": {
           "200": { "description": "Profil mis à jour", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/User" } } } },
           "401": { "description": "Non authentifié" },
-          "403": { "description": "Pas de permission pour modifier ce profil" }
+          "400": { "description": "Données invalides" }
         }
       }
     },
