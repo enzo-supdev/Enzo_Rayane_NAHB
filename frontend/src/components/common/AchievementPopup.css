@@ -32,9 +32,9 @@
 }
 
 .popup-content {
-  background: white;
+  background: var(--bg-tertiary);
   border-radius: 12px;
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+  box-shadow: var(--shadow-xl);
   border: 3px solid;
   width: 350px;
   overflow: hidden;
@@ -77,23 +77,26 @@
 }
 
 .popup-header {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  color: white;
+  background: linear-gradient(135deg, var(--color-secondary-dark) 0%, var(--color-secondary) 100%);
+  color: var(--text-dark);
   padding: 0.75rem 1rem;
   display: flex;
   justify-content: space-between;
   align-items: center;
+  border-bottom: 2px solid var(--color-secondary-light);
 }
 
 .achievement-unlocked-text {
   font-weight: bold;
+  font-family: var(--font-heading);
   font-size: 0.95rem;
+  letter-spacing: 0.5px;
 }
 
 .close-btn {
   background: none;
   border: none;
-  color: white;
+  color: var(--text-dark);
   font-size: 1.5rem;
   cursor: pointer;
   padding: 0;
@@ -103,11 +106,11 @@
   align-items: center;
   justify-content: center;
   border-radius: 4px;
-  transition: background 0.2s;
+  transition: background var(--transition-base);
 }
 
 .close-btn:hover {
-  background: rgba(255, 255, 255, 0.2);
+  background: rgba(0, 0, 0, 0.2);
 }
 
 .popup-body {
@@ -137,11 +140,13 @@
 .popup-name {
   font-size: 1.25rem;
   font-weight: bold;
+  font-family: var(--font-heading);
+  color: var(--color-secondary);
   margin: 0 0 0.5rem 0;
 }
 
 .popup-description {
-  color: #6b7280;
+  color: var(--text-secondary);
   font-size: 0.9rem;
   margin-bottom: 0.75rem;
 }
@@ -153,11 +158,13 @@
 }
 
 .xp-badge {
-  background: linear-gradient(90deg, #3b82f6, #8b5cf6);
-  color: white;
+  background: linear-gradient(90deg, var(--color-secondary-dark), var(--color-secondary));
+  color: var(--text-dark);
   padding: 0.25rem 0.75rem;
+  border: 1px solid var(--color-secondary-light);
   border-radius: 12px;
   font-weight: 600;
+  font-family: var(--font-heading);
   font-size: 0.85rem;
 }
 

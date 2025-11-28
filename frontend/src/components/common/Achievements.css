@@ -35,21 +35,22 @@
 .unlocked-count {
   font-size: 2.5rem;
   font-weight: bold;
-  color: #3b82f6;
+  font-family: var(--font-heading);
+  color: var(--color-secondary);
 }
 
 .total-count {
   font-size: 1.5rem;
-  color: #6b7280;
+  color: var(--text-secondary);
 }
 
 .separator {
   font-size: 1.5rem;
-  color: #9ca3af;
+  color: var(--text-muted);
 }
 
 .label {
-  color: #6b7280;
+  color: var(--text-secondary);
   margin-left: 0.5rem;
 }
 
@@ -83,23 +84,26 @@
 
 .achievements-filters button {
   padding: 0.5rem 1rem;
-  border: 2px solid #e5e7eb;
-  background: white;
+  border: 2px solid var(--border-color);
+  background: var(--bg-tertiary);
   border-radius: 8px;
   cursor: pointer;
-  transition: all 0.2s;
-  font-weight: 500;
+  transition: all var(--transition-base);
+  font-weight: 600;
+  font-family: var(--font-heading);
+  color: var(--text-primary);
 }
 
 .achievements-filters button:hover {
-  border-color: #3b82f6;
-  background: #eff6ff;
+  border-color: var(--color-secondary);
+  background: var(--bg-secondary);
+  color: var(--color-secondary);
 }
 
 .achievements-filters button.active {
-  border-color: #3b82f6;
-  background: #3b82f6;
-  color: white;
+  border-color: var(--color-secondary);
+  background: var(--color-secondary);
+  color: var(--text-dark);
 }
 
 .achievements-grid {
@@ -109,22 +113,22 @@
 }
 
 .achievement-card {
-  background: white;
+  background: var(--bg-tertiary);
   border-radius: 12px;
   padding: 1.5rem;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  box-shadow: var(--shadow-md);
   border: 3px solid;
-  transition: transform 0.2s, box-shadow 0.2s;
+  transition: all var(--transition-base);
 }
 
 .achievement-card:hover {
   transform: translateY(-4px);
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
+  box-shadow: var(--shadow-lg);
 }
 
 .achievement-card.locked {
   opacity: 0.6;
-  border-color: #d1d5db !important;
+  border-color: var(--border-light) !important;
 }
 
 .achievement-card.locked .achievement-icon {

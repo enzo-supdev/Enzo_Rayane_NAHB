@@ -1,11 +1,11 @@
 .timed-choice-container {
-  background: white;
+  background: var(--bg-tertiary);
   border-radius: 12px;
   padding: 20px;
-  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  box-shadow: var(--shadow-md);
   margin-top: 20px;
-  border: 3px solid #3b82f6;
-  transition: all 0.3s ease;
+  border: 3px solid var(--color-secondary);
+  transition: all var(--transition-base);
 }
 
 .timed-choice-container.warning {
@@ -29,8 +29,9 @@
 }
 
 .timer-display {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  color: white;
+  background: linear-gradient(135deg, var(--color-secondary-dark) 0%, var(--color-secondary) 100%);
+  color: var(--text-dark);
+  border: 2px solid var(--color-secondary-light);
   border-radius: 8px;
   padding: 15px;
   margin-bottom: 20px;
