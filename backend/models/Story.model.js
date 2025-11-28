@@ -90,6 +90,15 @@ const storySchema = new mongoose.Schema({
     type: Boolean,
     default: false
   },
+  // Configuration du système de combat
+  combatSystem: {
+    enabled: { type: Boolean, default: false },
+    allowDeath: { type: Boolean, default: true }, // Si false, HP ne peut pas descendre à 0
+    maxHealth: { type: Number, default: 100, min: 1, max: 999 },
+    maxAttack: { type: Number, default: 100, min: 1, max: 999 },
+    maxDefense: { type: Number, default: 100, min: 1, max: 999 },
+    maxMagic: { type: Number, default: 100, min: 1, max: 999 }
+  },
   initialStats: {
     health: { type: Number, default: 100 },
     attack: { type: Number, default: 10 },

@@ -4,6 +4,9 @@ import Page from '../models/Page.model.js';
 import Choice from '../models/Choice.model.js';
 import { AppError, asyncHandler } from '../middlewares/error.middleware.js';
 import { rollDice } from '../utils/dice.utils.js';
+import { updateProgress, markCompleted } from './library.controller.js';
+import { addXP, updateStats } from './profile.controller.js';
+import { checkAchievements } from './achievement.controller.js';
 
 // @desc    Start a new game
 // @route   POST /api/games/start
@@ -37,7 +40,7 @@ export const startGame = asyncHandler(async (req, res, next) => {
     currentPage: story.startPage._id,
     isPreview: isPreview || false,
     inventory: [],
-    playerStats: story.hasCharacterStats ? {
+    playerStats: (story.hasCharacterStats || story.combatSystem?.enabled) ? {
       health: story.initialStats.health,
       attack: story.initialStats.attack,
       defense: story.initialStats.defense,
@@ -53,6 +56,9 @@ export const startGame = asyncHandler(async (req, res, next) => {
   if (!isPreview) {
     story.totalPlays += 1;
     await story.save();
+    
+    // Update library progress
+    await updateProgress(req.user._id, storyId, game._id, story.startPage._id, 0);
   }
 
   const populatedGame = await Game.findById(game._id)
@@ -137,12 +143,55 @@ export const makeChoice = asyncHandler(async (req, res, next) => {
     game.inventory.push(choice.itemGiven);
   }
 
-  // Apply stats modifier
-  if (choice.statsModifier) {
+  // Get story for combat system config
+  const story = await Story.findById(game.story);
+
+  // Apply action effects (nouveau système)
+  if (choice.actionEffects && story.combatSystem?.enabled) {
+    const effects = choice.actionEffects;
+    const combat = story.combatSystem;
+    
+    // Apply health change
+    if (effects.healthChange) {
+      game.playerStats.health += effects.healthChange;
+      // Respect combat system limits
+      if (combat.allowDeath) {
+        game.playerStats.health = Math.max(0, Math.min(combat.maxHealth, game.playerStats.health));
+      } else {
+        game.playerStats.health = Math.max(1, Math.min(combat.maxHealth, game.playerStats.health));
+      }
+    }
+    
+    // Apply other stat changes
+    if (effects.attackChange) {
+      game.playerStats.attack = Math.max(0, Math.min(combat.maxAttack, game.playerStats.attack + effects.attackChange));
+    }
+    if (effects.defenseChange) {
+      game.playerStats.defense = Math.max(0, Math.min(combat.maxDefense, game.playerStats.defense + effects.defenseChange));
+    }
+    if (effects.magicChange) {
+      game.playerStats.magic = Math.max(0, Math.min(combat.maxMagic, game.playerStats.magic + effects.magicChange));
+    }
+  }
+  // Apply stats modifier (ancien système, pour compatibilité)
+  else if (choice.statsModifier && game.playerStats) {
     game.playerStats.health = Math.max(0, Math.min(100, game.playerStats.health + (choice.statsModifier.health || 0)));
     game.playerStats.attack += choice.statsModifier.attack || 0;
     game.playerStats.defense += choice.statsModifier.defense || 0;
     game.playerStats.magic += choice.statsModifier.magic || 0;
+  }
+
+  // Check for death
+  if (game.playerStats && game.playerStats.health <= 0 && story.combatSystem?.allowDeath) {
+    game.status = 'abandoned';
+    await game.save();
+    
+    return res.status(200).json({
+      success: false,
+      message: 'Game Over - Your character has died',
+      gameOver: true,
+      data: game
+    });
   }
 
   // Add step to path
@@ -166,7 +215,64 @@ export const makeChoice = asyncHandler(async (req, res, next) => {
       const story = await Story.findById(game.story);
       story.totalCompletions += 1;
       await story.save();
+      
+      // Mark as completed in library
+      const readingTime = Math.floor((Date.now() - game.createdAt) / 60000); // minutes
+      await markCompleted(req.user._id, game.story, game._id, targetPage.endingLabel || 'Unknown', readingTime);
+      
+      // Update user stats
+      await updateStats(req.user._id, {
+        storiesCompleted: 1,
+        endingsFound: 1,
+        choicesMade: 1,
+        totalReadingTime: readingTime
+      });
+      
+      // Add XP for completing story
+      await addXP(req.user._id, 100, 'Completed story');
+      
+      // Check for new achievements
+      const newAchievements = await checkAchievements(req.user._id);
+      
+      // Return achievements info
+      if (newAchievements.length > 0) {
+        await targetPage.save();
+        await game.save();
+        
+        const populatedGame = await Game.findById(game._id)
+          .populate({
+            path: 'currentPage',
+            populate: {
+              path: 'choices',
+              select: 'text targetPage requiresDice diceCondition'
+            }
+          })
+          .populate({
+            path: 'path.choice',
+            select: 'text'
+          });
+        
+        return res.status(200).json({
+          success: true,
+          data: populatedGame,
+          newAchievements,
+          ...(actualDiceRoll && { diceRoll: actualDiceRoll })
+        });
+      }
     }
+  } else if (!game.isPreview) {
+    // Update progress in library for non-ending pages
+    const totalPages = await Page.countDocuments({ story: game.story });
+    const visitedPages = game.path.length;
+    const progressPercent = Math.min(Math.round((visitedPages / totalPages) * 100), 99);
+    
+    await updateProgress(req.user._id, game.story, game._id, targetPage._id, progressPercent);
+    
+    // Add small XP for making choices
+    await addXP(req.user._id, 5, 'Made a choice');
+    
+    // Update choice count
+    await updateStats(req.user._id, { choicesMade: 1 });
   }
 
   await targetPage.save();

@@ -62,6 +62,26 @@ const choiceSchema = new mongoose.Schema({
     type: String,
     default: null
   },
+  // Type d'action du choix (none, damage, heal, attack, defend, special)
+  actionType: {
+    type: String,
+    enum: ['none', 'damage', 'heal', 'attack', 'defend', 'buff', 'debuff'],
+    default: 'none'
+  },
+  // Effets de l'action
+  actionEffects: {
+    healthChange: { type: Number, default: 0 }, // Positif pour heal, négatif pour damage
+    attackChange: { type: Number, default: 0 },
+    defenseChange: { type: Number, default: 0 },
+    magicChange: { type: Number, default: 0 }
+  },
+  // Description de l'action pour l'auteur et les joueurs
+  actionDescription: {
+    type: String,
+    maxlength: [200, 'Action description cannot exceed 200 characters'],
+    default: ''
+  },
+  // Pour compatibilité avec l'ancien système
   statsModifier: {
     health: { type: Number, default: 0 },
     attack: { type: Number, default: 0 },

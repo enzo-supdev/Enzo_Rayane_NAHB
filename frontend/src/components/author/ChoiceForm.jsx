@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import './ChoiceForm.css';
 
-function ChoiceForm({ pages, onSave, onCancel }) {
+function ChoiceForm({ pages, onSave, onCancel, story }) {
   const [formData, setFormData] = useState({
     text: '',
     nextPage: '',
@@ -9,7 +9,15 @@ function ChoiceForm({ pages, onSave, onCancel }) {
     diceRequired: {
       type: 'd20',
       minValue: 10
-    }
+    },
+    actionType: 'none',
+    actionEffects: {
+      healthChange: 0,
+      attackChange: 0,
+      defenseChange: 0,
+      magicChange: 0
+    },
+    actionDescription: ''
   });
 
   const handleChange = (e) => {
@@ -22,6 +30,15 @@ function ChoiceForm({ pages, onSave, onCancel }) {
         diceRequired: {
           ...prev.diceRequired,
           [diceField]: diceField === 'minValue' ? parseInt(value) : value
+        }
+      }));
+    } else if (name.startsWith('effect.')) {
+      const effectField = name.split('.')[1];
+      setFormData(prev => ({
+        ...prev,
+        actionEffects: {
+          ...prev.actionEffects,
+          [effectField]: parseInt(value) || 0
         }
       }));
     } else {
@@ -37,7 +54,12 @@ function ChoiceForm({ pages, onSave, onCancel }) {
     const choiceData = {
       text: formData.text,
       nextPage: formData.nextPage,
-      ...(formData.hasDiceRequirement && { diceRequired: formData.diceRequired })
+      ...(formData.hasDiceRequirement && { diceRequired: formData.diceRequired }),
+      actionType: formData.actionType,
+      ...(formData.actionType !== 'none' && { 
+        actionEffects: formData.actionEffects,
+        actionDescription: formData.actionDescription
+      })
     };
     onSave(choiceData);
   };
@@ -126,6 +148,105 @@ function ChoiceForm({ pages, onSave, onCancel }) {
               />
             </div>
           </div>
+        </div>
+      )}
+
+      {/* Effets de Combat */}
+      {story?.combatSystem?.enabled && (
+        <div className="combat-effects-section">
+          <h4>⚔️ Effets de Combat</h4>
+          
+          <div className="form-group">
+            <label htmlFor="actionType">Type d'Action</label>
+            <select
+              id="actionType"
+              name="actionType"
+              value={formData.actionType}
+              onChange={handleChange}
+            >
+              <option value="none">Aucun effet</option>
+              <option value="damage">💥 Dégâts (perte de HP)</option>
+              <option value="heal">💚 Soin (gain de HP)</option>
+              <option value="attack">⚔️ Attaque (modification attaque)</option>
+              <option value="defend">🛡️ Défense (modification défense)</option>
+              <option value="buff">✨ Buff (amélioration stats)</option>
+              <option value="debuff">💀 Debuff (réduction stats)</option>
+            </select>
+          </div>
+
+          {formData.actionType !== 'none' && (
+            <>
+              <div className="form-group">
+                <label htmlFor="actionDescription">Description de l'Action</label>
+                <input
+                  type="text"
+                  id="actionDescription"
+                  name="actionDescription"
+                  value={formData.actionDescription}
+                  onChange={handleChange}
+                  placeholder="Ex: Vous perdez 20 HP dans le combat"
+                  maxLength={200}
+                />
+                <small>Décrit l'effet pour les joueurs</small>
+              </div>
+
+              <div className="form-row">
+                <div className="form-group">
+                  <label htmlFor="healthChange">
+                    HP ({formData.actionEffects.healthChange >= 0 ? '+' : ''}{formData.actionEffects.healthChange})
+                  </label>
+                  <input
+                    type="number"
+                    id="healthChange"
+                    name="effect.healthChange"
+                    value={formData.actionEffects.healthChange}
+                    onChange={handleChange}
+                    placeholder="Négatif = dégâts, Positif = soin"
+                  />
+                  <small>{formData.actionEffects.healthChange < 0 ? '❤️ Perte de HP' : formData.actionEffects.healthChange > 0 ? '💚 Soin' : 'Aucun effet'}</small>
+                </div>
+
+                <div className="form-group">
+                  <label htmlFor="attackChange">
+                    Attaque ({formData.actionEffects.attackChange >= 0 ? '+' : ''}{formData.actionEffects.attackChange})
+                  </label>
+                  <input
+                    type="number"
+                    id="attackChange"
+                    name="effect.attackChange"
+                    value={formData.actionEffects.attackChange}
+                    onChange={handleChange}
+                  />
+                </div>
+
+                <div className="form-group">
+                  <label htmlFor="defenseChange">
+                    Défense ({formData.actionEffects.defenseChange >= 0 ? '+' : ''}{formData.actionEffects.defenseChange})
+                  </label>
+                  <input
+                    type="number"
+                    id="defenseChange"
+                    name="effect.defenseChange"
+                    value={formData.actionEffects.defenseChange}
+                    onChange={handleChange}
+                  />
+                </div>
+
+                <div className="form-group">
+                  <label htmlFor="magicChange">
+                    Magie ({formData.actionEffects.magicChange >= 0 ? '+' : ''}{formData.actionEffects.magicChange})
+                  </label>
+                  <input
+                    type="number"
+                    id="magicChange"
+                    name="effect.magicChange"
+                    value={formData.actionEffects.magicChange}
+                    onChange={handleChange}
+                  />
+                </div>
+              </div>
+            </>
+          )}
         </div>
       )}
 

@@ -105,3 +105,36 @@
     width: 100%;
   }
 }
+
+/* Combat Effects Section */
+.combat-effects-section {
+  padding: var(--spacing-md);
+  background: rgba(220, 20, 60, 0.1);
+  border: 2px solid #dc143c;
+  border-radius: var(--radius-md);
+  margin-top: var(--spacing-md);
+}
+
+.combat-effects-section h4 {
+  margin: 0 0 var(--spacing-md) 0;
+  font-size: var(--font-size-lg);
+  color: #dc143c;
+  font-family: var(--font-heading);
+}
+
+.combat-effects-section .form-group input[type="number"] {
+  font-weight: 600;
+  text-align: center;
+}
+
+.combat-effects-section .form-group input[type="number"]:focus {
+  border-color: #dc143c;
+}
+
+.combat-effects-section .form-group small {
+  display: block;
+  text-align: center;
+  margin-top: var(--spacing-xs);
+  font-weight: 600;
+  color: var(--color-secondary);
+}

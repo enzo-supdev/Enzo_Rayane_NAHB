@@ -21,6 +21,9 @@ const Navbar = () => {
 
             {user ? (
               <>
+                <Link to="/profile" className="nav-link">
+                  👤 Mon Profil
+                </Link>
                 {isAuthor && (
                   <Link to="/author/dashboard" className="nav-link">
                     ✍️ Mes Créations

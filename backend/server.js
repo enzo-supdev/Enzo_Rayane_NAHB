@@ -22,6 +22,9 @@ import reportRoutes from './routes/report.routes.js';
 import statisticsRoutes from './routes/statistics.routes.js';
 import adminRoutes from './routes/admin.routes.js';
 import commentRoutes from './routes/comment.routes.js';
+import achievementRoutes from './routes/achievement.routes.js';
+import profileRoutes from './routes/profile.routes.js';
+import libraryRoutes from './routes/library.routes.js';
 
 // Import middlewares
 import { errorHandler } from './middlewares/error.middleware.js';
@@ -79,6 +82,9 @@ app.use('/api/reports', reportRoutes);
 app.use('/api/statistics', statisticsRoutes);
 app.use('/api/admin', adminRoutes);
 app.use('/api', commentRoutes);
+app.use('/api/achievements', achievementRoutes);
+app.use('/api/profile', profileRoutes);
+app.use('/api/library', libraryRoutes);
 
 // 404 handler
 app.use('*', (req, res) => {

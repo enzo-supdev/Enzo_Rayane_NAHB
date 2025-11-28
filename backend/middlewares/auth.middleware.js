@@ -50,6 +50,16 @@ export const restrictTo = (...roles) => {
   };
 };
 
+// Alias for restrictTo (single role check)
+export const authorize = (role) => {
+  return (req, res, next) => {
+    if (req.user.role !== role) {
+      return next(new AppError('You do not have permission to perform this action', 403));
+    }
+    next();
+  };
+};
+
 // Check if user is author (can create stories)
 export const isAuthor = (req, res, next) => {
   if (!req.user.canCreateStories()) {

@@ -18,8 +18,8 @@ import StoryEdit from './pages/StoryEdit';
 // Admin Pages
 import AdminDashboard from './pages/AdminDashboard';
 
-// Styles
-import './styles/global.css';
+// User Profile Pages
+import UserProfile from './pages/UserProfile';
 
 function App() {
   return (
@@ -40,6 +40,16 @@ function App() {
               element={
                 <ProtectedRoute>
                   <StoryReader />
+                </ProtectedRoute>
+              }
+            />
+
+            {/* Protected Routes - User Profile */}
+            <Route
+              path="/profile"
+              element={
+                <ProtectedRoute>
+                  <UserProfile />
                 </ProtectedRoute>
               }
             />

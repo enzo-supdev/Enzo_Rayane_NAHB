@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import ChoiceForm from './ChoiceForm';
 import './PageForm.css';
 
-function PageForm({ storyId, page = null, pages = [], onSave, onCancel }) {
+function PageForm({ storyId, page = null, pages = [], story = null, onSave, onCancel }) {
   const [formData, setFormData] = useState({
     title: '',
     content: '',
@@ -217,6 +217,7 @@ function PageForm({ storyId, page = null, pages = [], onSave, onCancel }) {
           {showChoiceForm && availablePages.length > 0 && (
             <ChoiceForm
               pages={availablePages}
+              story={story}
               onSave={handleAddChoice}
               onCancel={() => setShowChoiceForm(false)}
             />

@@ -13,33 +13,40 @@ export const useAuth = () => {
 
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
+  const [token, setToken] = useState(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const currentUser = authService.getCurrentUser();
+    const currentToken = authService.getToken();
     setUser(currentUser);
+    setToken(currentToken);
     setLoading(false);
   }, []);
 
   const register = async (userData) => {
     const data = await authService.register(userData);
     setUser(data.data.user);
+    setToken(data.data.token);
     return data;
   };
 
   const login = async (credentials) => {
     const data = await authService.login(credentials);
     setUser(data.data.user);
+    setToken(data.data.token);
     return data;
   };
 
   const logout = () => {
     authService.logout();
     setUser(null);
+    setToken(null);
   };
 
   const value = {
     user,
+    token,
     loading,
     register,
     login,

@@ -2,6 +2,8 @@ import Rating from '../models/Rating.model.js';
 import Story from '../models/Story.model.js';
 import { AppError, asyncHandler } from '../middlewares/error.middleware.js';
 import { paginate } from '../utils/query.utils.js';
+import { addXP, updateStats } from './profile.controller.js';
+import { checkAchievements } from './achievement.controller.js';
 
 // @desc    Create or update rating
 // @route   POST /api/ratings
@@ -54,6 +56,11 @@ export const createOrUpdateRating = asyncHandler(async (req, res, next) => {
 
   // Update story rating
   await story.updateRating(rating);
+  
+  // Add XP and update stats
+  await addXP(req.user._id, 10, 'Rated a story');
+  await updateStats(req.user._id, { ratingsGiven: 1 });
+  await checkAchievements(req.user._id);
 
   res.status(201).json({
     success: true,

@@ -1,5 +1,7 @@
 import Comment from '../models/Comment.model.js';
 import Story from '../models/Story.model.js';
+import { addXP, updateStats } from './profile.controller.js';
+import { checkAchievements } from './achievement.controller.js';
 
 // Create a new comment
 export const createComment = async (req, res, next) => {
@@ -21,6 +23,11 @@ export const createComment = async (req, res, next) => {
     });
 
     await comment.populate('author', 'username avatar');
+    
+    // Add XP and update stats
+    await addXP(req.user.id, 15, 'Posted a comment');
+    await updateStats(req.user.id, { commentsMade: 1 });
+    await checkAchievements(req.user.id);
 
     res.status(201).json({
       message: 'Comment created successfully',

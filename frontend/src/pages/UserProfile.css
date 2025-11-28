@@ -1,0 +1,61 @@
+.user-profile-page {
+  min-height: 100vh;
+  background: transparent;
+}
+
+.profile-tabs {
+  background: linear-gradient(135deg, var(--bg-secondary) 0%, var(--bg-primary) 100%);
+  box-shadow: var(--shadow-lg);
+  padding: 1rem 2rem;
+  display: flex;
+  gap: 1rem;
+  position: sticky;
+  top: 70px;
+  z-index: 100;
+  border-bottom: 2px solid var(--border-color);
+}
+
+.profile-tabs button {
+  padding: 0.75rem 1.5rem;
+  border: 2px solid var(--border-color);
+  background: var(--bg-tertiary);
+  border-radius: 8px;
+  cursor: pointer;
+  font-weight: 600;
+  font-size: 1rem;
+  font-family: var(--font-heading);
+  transition: all var(--transition-base);
+  color: var(--text-primary);
+}
+
+.profile-tabs button:hover {
+  background: var(--bg-secondary);
+  border-color: var(--color-secondary);
+  color: var(--color-secondary);
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-md);
+}
+
+.profile-tabs button.active {
+  background: var(--color-secondary);
+  color: var(--text-dark);
+  border-color: var(--color-secondary-light);
+  box-shadow: var(--shadow-lg);
+}
+
+.profile-content {
+  padding: 0;
+}
+
+@media (max-width: 768px) {
+  .profile-tabs {
+    padding: 0.75rem 1rem;
+    overflow-x: auto;
+  }
+
+  .profile-tabs button {
+    padding: 0.5rem 1rem;
+    font-size: 0.9rem;
+    white-space: nowrap;
+  }
+}

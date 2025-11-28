@@ -223,6 +223,7 @@ function StoryEdit() {
                   <PageForm
                     storyId={id}
                     pages={pages}
+                    story={story}
                     onSave={handleCreatePage}
                     onCancel={() => setSelectedPage(null)}
                   />
@@ -252,6 +253,7 @@ function StoryEdit() {
                       storyId={id}
                       page={selectedPage}
                       pages={pages}
+                      story={story}
                       onSave={(data) => handleUpdatePage(selectedPage._id, data)}
                       onCancel={() => setSelectedPage(null)}
                     />
@@ -350,6 +352,196 @@ function StoryEdit() {
                   </div>
                 </div>
 
+                {/* Système de Combat */}
+                <div className="form-section">
+                  <h3>⚔️ Système de Combat & HP</h3>
+                  
+                  <div className="form-group">
+                    <label className="checkbox-label">
+                      <input
+                        type="checkbox"
+                        checked={story.combatSystem?.enabled || false}
+                        onChange={(e) => setStory({
+                          ...story,
+                          combatSystem: {
+                            ...story.combatSystem,
+                            enabled: e.target.checked,
+                            allowDeath: story.combatSystem?.allowDeath ?? true,
+                            maxHealth: story.combatSystem?.maxHealth || 100,
+                            maxAttack: story.combatSystem?.maxAttack || 100,
+                            maxDefense: story.combatSystem?.maxDefense || 100,
+                            maxMagic: story.combatSystem?.maxMagic || 100
+                          }
+                        })}
+                      />
+                      <span>💥 Activer le système de combat</span>
+                    </label>
+                    <small>Permet aux choix d'affecter les HP et les stats du joueur</small>
+                  </div>
+
+                  {story.combatSystem?.enabled && (
+                    <>
+                      <div className="form-group">
+                        <label className="checkbox-label">
+                          <input
+                            type="checkbox"
+                            checked={story.combatSystem?.allowDeath ?? true}
+                            onChange={(e) => setStory({
+                              ...story,
+                              combatSystem: {
+                                ...story.combatSystem,
+                                allowDeath: e.target.checked
+                              }
+                            })}
+                          />
+                          <span>💀 Autoriser la mort du personnage</span>
+                        </label>
+                        <small>Si désactivé, les HP ne peuvent pas descendre à 0</small>
+                      </div>
+
+                      <div className="form-row">
+                        <div className="form-group">
+                          <label>HP Max</label>
+                          <input
+                            type="number"
+                            min="1"
+                            max="999"
+                            value={story.combatSystem?.maxHealth || 100}
+                            onChange={(e) => setStory({
+                              ...story,
+                              combatSystem: {
+                                ...story.combatSystem,
+                                maxHealth: parseInt(e.target.value)
+                              }
+                            })}
+                          />
+                        </div>
+
+                        <div className="form-group">
+                          <label>Attaque Max</label>
+                          <input
+                            type="number"
+                            min="1"
+                            max="999"
+                            value={story.combatSystem?.maxAttack || 100}
+                            onChange={(e) => setStory({
+                              ...story,
+                              combatSystem: {
+                                ...story.combatSystem,
+                                maxAttack: parseInt(e.target.value)
+                              }
+                            })}
+                          />
+                        </div>
+
+                        <div className="form-group">
+                          <label>Défense Max</label>
+                          <input
+                            type="number"
+                            min="1"
+                            max="999"
+                            value={story.combatSystem?.maxDefense || 100}
+                            onChange={(e) => setStory({
+                              ...story,
+                              combatSystem: {
+                                ...story.combatSystem,
+                                maxDefense: parseInt(e.target.value)
+                              }
+                            })}
+                          />
+                        </div>
+
+                        <div className="form-group">
+                          <label>Magie Max</label>
+                          <input
+                            type="number"
+                            min="1"
+                            max="999"
+                            value={story.combatSystem?.maxMagic || 100}
+                            onChange={(e) => setStory({
+                              ...story,
+                              combatSystem: {
+                                ...story.combatSystem,
+                                maxMagic: parseInt(e.target.value)
+                              }
+                            })}
+                          />
+                        </div>
+                      </div>
+
+                      <div className="form-row">
+                        <div className="form-group">
+                          <label>HP Initiaux</label>
+                          <input
+                            type="number"
+                            min="1"
+                            max={story.combatSystem?.maxHealth || 100}
+                            value={story.initialStats?.health || 100}
+                            onChange={(e) => setStory({
+                              ...story,
+                              initialStats: {
+                                ...story.initialStats,
+                                health: parseInt(e.target.value)
+                              }
+                            })}
+                          />
+                        </div>
+
+                        <div className="form-group">
+                          <label>Attaque Initiale</label>
+                          <input
+                            type="number"
+                            min="0"
+                            max={story.combatSystem?.maxAttack || 100}
+                            value={story.initialStats?.attack || 10}
+                            onChange={(e) => setStory({
+                              ...story,
+                              initialStats: {
+                                ...story.initialStats,
+                                attack: parseInt(e.target.value)
+                              }
+                            })}
+                          />
+                        </div>
+
+                        <div className="form-group">
+                          <label>Défense Initiale</label>
+                          <input
+                            type="number"
+                            min="0"
+                            max={story.combatSystem?.maxDefense || 100}
+                            value={story.initialStats?.defense || 5}
+                            onChange={(e) => setStory({
+                              ...story,
+                              initialStats: {
+                                ...story.initialStats,
+                                defense: parseInt(e.target.value)
+                              }
+                            })}
+                          />
+                        </div>
+
+                        <div className="form-group">
+                          <label>Magie Initiale</label>
+                          <input
+                            type="number"
+                            min="0"
+                            max={story.combatSystem?.maxMagic || 100}
+                            value={story.initialStats?.magic || 0}
+                            onChange={(e) => setStory({
+                              ...story,
+                              initialStats: {
+                                ...story.initialStats,
+                                magic: parseInt(e.target.value)
+                              }
+                            })}
+                          />
+                        </div>
+                      </div>
+                    </>
+                  )}
+                </div>
+
                 <div className="form-actions">
                   <button
                     className="btn btn-primary"
@@ -358,7 +550,9 @@ function StoryEdit() {
                       description: story.description,
                       synopsis: story.synopsis,
                       theme: story.theme,
-                      difficulty: story.difficulty
+                      difficulty: story.difficulty,
+                      combatSystem: story.combatSystem,
+                      initialStats: story.initialStats
                     })}
                   >
                     💾 Enregistrer les Modifications
