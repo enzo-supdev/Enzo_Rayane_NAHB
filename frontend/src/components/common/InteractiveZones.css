@@ -1,0 +1,132 @@
+.interactive-zones-container {
+  width: 100%;
+  margin: 20px 0;
+}
+
+.image-wrapper {
+  position: relative;
+  width: 100%;
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+.interactive-image {
+  width: 100%;
+  height: auto;
+  display: block;
+}
+
+.zones-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  pointer-events: none;
+}
+
+.zone {
+  pointer-events: auto;
+  background: rgba(59, 130, 246, 0.2);
+  border: 2px solid rgba(59, 130, 246, 0.5);
+  transition: all 0.3s ease;
+}
+
+.zone:hover {
+  background: rgba(59, 130, 246, 0.4);
+  border-color: rgba(59, 130, 246, 0.8);
+  box-shadow: 0 0 20px rgba(59, 130, 246, 0.6);
+  animation: pulse-zone 1s ease-in-out infinite;
+}
+
+@keyframes pulse-zone {
+  0%, 100% {
+    box-shadow: 0 0 20px rgba(59, 130, 246, 0.6);
+  }
+  50% {
+    box-shadow: 0 0 30px rgba(59, 130, 246, 0.9);
+  }
+}
+
+.zone.hovered {
+  background: rgba(59, 130, 246, 0.5);
+  border-color: #3b82f6;
+  z-index: 10;
+}
+
+.zone-tooltip {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  background: rgba(0, 0, 0, 0.9);
+  color: white;
+  padding: 10px 15px;
+  border-radius: 8px;
+  font-size: 0.9rem;
+  white-space: nowrap;
+  pointer-events: none;
+  z-index: 100;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+  animation: fadeIn 0.3s ease;
+}
+
+.zone-tooltip::before {
+  content: '👆';
+  display: block;
+  text-align: center;
+  font-size: 1.2rem;
+  margin-bottom: 5px;
+}
+
+.zones-hint {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  padding: 12px 20px;
+  border-radius: 8px;
+  text-align: center;
+  margin-top: 15px;
+  font-size: 0.95rem;
+  font-weight: 500;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translate(-50%, -50%) scale(0.9);
+  }
+  to {
+    opacity: 1;
+    transform: translate(-50%, -50%) scale(1);
+  }
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .zone-tooltip {
+    font-size: 0.8rem;
+    padding: 8px 12px;
+    max-width: 200px;
+    white-space: normal;
+    text-align: center;
+  }
+
+  .zones-hint {
+    font-size: 0.85rem;
+    padding: 10px 15px;
+  }
+}
+
+/* Touch device support */
+@media (hover: none) and (pointer: coarse) {
+  .zone {
+    background: rgba(59, 130, 246, 0.3);
+    border-width: 3px;
+  }
+
+  .zone:active {
+    background: rgba(59, 130, 246, 0.6);
+  }
+}

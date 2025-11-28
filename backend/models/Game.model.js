@@ -62,6 +62,15 @@ const gameSchema = new mongoose.Schema({
   isPreview: {
     type: Boolean,
     default: false
+  },
+  inventory: [{
+    type: String
+  }],
+  playerStats: {
+    health: { type: Number, default: 100 },
+    attack: { type: Number, default: 10 },
+    defense: { type: Number, default: 5 },
+    magic: { type: Number, default: 0 }
   }
 }, {
   timestamps: true

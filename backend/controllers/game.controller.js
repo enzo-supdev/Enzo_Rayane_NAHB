@@ -35,7 +35,14 @@ export const startGame = asyncHandler(async (req, res, next) => {
     story: storyId,
     player: req.user._id,
     currentPage: story.startPage._id,
-    isPreview: isPreview || false
+    isPreview: isPreview || false,
+    inventory: [],
+    playerStats: story.hasCharacterStats ? {
+      health: story.initialStats.health,
+      attack: story.initialStats.attack,
+      defense: story.initialStats.defense,
+      magic: story.initialStats.magic
+    } : undefined
   });
 
   // Add first step to path
@@ -97,6 +104,15 @@ export const makeChoice = asyncHandler(async (req, res, next) => {
     return next(new AppError('Invalid choice for current page', 400));
   }
 
+  // Check item requirement
+  if (choice.itemRequired && !game.inventory.includes(choice.itemRequired)) {
+    return res.status(400).json({
+      success: false,
+      message: `Item required: ${choice.itemRequired}`,
+      itemRequired: choice.itemRequired
+    });
+  }
+
   // Handle dice roll if required
   let actualDiceRoll = diceRoll;
   if (choice.requiresDice) {
@@ -114,6 +130,19 @@ export const makeChoice = asyncHandler(async (req, res, next) => {
         required: choice.diceCondition
       });
     }
+  }
+
+  // Apply item given
+  if (choice.itemGiven && !game.inventory.includes(choice.itemGiven)) {
+    game.inventory.push(choice.itemGiven);
+  }
+
+  // Apply stats modifier
+  if (choice.statsModifier) {
+    game.playerStats.health = Math.max(0, Math.min(100, game.playerStats.health + (choice.statsModifier.health || 0)));
+    game.playerStats.attack += choice.statsModifier.attack || 0;
+    game.playerStats.defense += choice.statsModifier.defense || 0;
+    game.playerStats.magic += choice.statsModifier.magic || 0;
   }
 
   // Add step to path

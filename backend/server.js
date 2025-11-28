@@ -21,6 +21,7 @@ import ratingRoutes from './routes/rating.routes.js';
 import reportRoutes from './routes/report.routes.js';
 import statisticsRoutes from './routes/statistics.routes.js';
 import adminRoutes from './routes/admin.routes.js';
+import commentRoutes from './routes/comment.routes.js';
 
 // Import middlewares
 import { errorHandler } from './middlewares/error.middleware.js';
@@ -77,6 +78,7 @@ app.use('/api/ratings', ratingRoutes);
 app.use('/api/reports', reportRoutes);
 app.use('/api/statistics', statisticsRoutes);
 app.use('/api/admin', adminRoutes);
+app.use('/api', commentRoutes);
 
 // 404 handler
 app.use('*', (req, res) => {

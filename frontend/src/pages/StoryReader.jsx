@@ -2,6 +2,10 @@ import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import gameService from '../services/gameService';
 import Navbar from '../components/common/Navbar';
+import Inventory from '../components/common/Inventory';
+import PlayerStats from '../components/common/PlayerStats';
+import InteractiveZones from '../components/common/InteractiveZones';
+import TimedChoice from '../components/common/TimedChoice';
 import './StoryReader.css';
 
 const StoryReader = () => {
@@ -36,6 +40,12 @@ const StoryReader = () => {
   const handleChoice = async (choice) => {
     if (makingChoice) return;
 
+    // Check if item is required
+    if (choice.itemRequired && !game.inventory?.includes(choice.itemRequired)) {
+      setError(`Vous avez besoin de: ${choice.itemRequired}`);
+      return;
+    }
+
     // Check if dice roll is required
     if (choice.requiresDice && !diceRoll) {
       setError('Vous devez lancer les dés avant de faire ce choix !');
@@ -46,13 +56,24 @@ const StoryReader = () => {
       setMakingChoice(true);
       setError('');
 
-      const data = await gameService.makeChoice(gameId, choice._id);
-      setGame(data.data);
-      setCurrentPage(data.data.currentPage);
-      setDiceRoll(null); // Reset dice after choice
+      const response = await gameService.makeChoice(gameId, choice._id, diceRoll?.result);
+      
+      // Handle dice roll failure
+      if (response.success === false) {
+        setError(response.message || 'Le jet de dés a échoué');
+        setDiceRoll(null);
+        return;
+      }
 
-      // Scroll to top smoothly
-      window.scrollTo({ top: 0, behavior: 'smooth' });
+      // Success - update game state
+      if (response.data) {
+        setGame(response.data);
+        setCurrentPage(response.data.currentPage);
+        setDiceRoll(null); // Reset dice after choice
+
+        // Scroll to top smoothly
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+      }
     } catch (err) {
       console.error(err);
       setError(err.response?.data?.message || 'Erreur lors du choix');
@@ -80,6 +101,29 @@ const StoryReader = () => {
 
   const handleRestart = () => {
     navigate(`/stories/${game.story._id}`);
+  };
+
+  const handleInteractiveZone = async (zone) => {
+    if (!zone.targetPage) return;
+    
+    try {
+      // This would need a specific backend endpoint for zone navigation
+      console.log('Navigating via interactive zone to:', zone.targetPage);
+      // For now, we'll just show which zone was clicked
+      alert(`Zone cliquée: ${zone.description || 'Zone interactive'}`);
+    } catch (err) {
+      console.error('Error navigating via zone:', err);
+    }
+  };
+
+  const handleTimedChoiceTimeout = () => {
+    // Select first choice automatically or handle timeout
+    if (currentPage?.choices && currentPage.choices.length > 0) {
+      setError('⏰ Temps écoulé ! Choix automatique...');
+      setTimeout(() => {
+        handleChoice(currentPage.choices[0]);
+      }, 1000);
+    }
   };
 
   if (loading) {
@@ -127,38 +171,34 @@ const StoryReader = () => {
 
           {error && <div className="alert alert-error">{error}</div>}
 
+          {/* Player Stats and Inventory */}
+          <div className="game-status-row">
+            {game?.playerStats && (
+              <PlayerStats stats={game.playerStats} />
+            )}
+            {game?.inventory && game.story?.hasInventory && (
+              <Inventory items={game.inventory} />
+            )}
+          </div>
+
           {/* Current Page */}
           <div className="page-content card">
             {currentPage?.image && (
-              <div className="page-image">
-                <img
-                  src={`http://localhost:5000${currentPage.image}`}
-                  alt="Scene"
-                  className="scene-image"
+              currentPage.interactiveZones && currentPage.interactiveZones.length > 0 ? (
+                <InteractiveZones 
+                  imageUrl={`http://localhost:5000${currentPage.image}`}
+                  zones={currentPage.interactiveZones}
+                  onZoneClick={handleInteractiveZone}
                 />
-                
-                {/* Interactive Zones */}
-                {currentPage.interactiveZones?.map((zone, idx) => (
-                  <div
-                    key={idx}
-                    className="interactive-zone"
-                    style={{
-                      left: `${zone.x}%`,
-                      top: `${zone.y}%`,
-                      width: `${zone.width}%`,
-                      height: `${zone.height}%`,
-                      borderRadius: zone.shape === 'circle' ? '50%' : '4px',
-                    }}
-                    onClick={() => {
-                      if (zone.targetPage) {
-                        // Handle zone click (would need backend support)
-                        console.log('Zone clicked:', zone);
-                      }
-                    }}
-                    title="Zone interactive"
+              ) : (
+                <div className="page-image">
+                  <img
+                    src={`http://localhost:5000${currentPage.image}`}
+                    alt="Scene"
+                    className="scene-image"
                   />
-                ))}
-              </div>
+                </div>
+              )
             )}
 
             <div className="page-text">
@@ -222,36 +262,67 @@ const StoryReader = () => {
 
           {/* Choices */}
           {!isEnding && hasChoices && (
-            <div className="choices-section">
-              <h3 className="choices-title">⚔️ Que faites-vous ?</h3>
-              <div className="choices-list">
-                {currentPage.choices.map((choice, index) => {
-                  const needsDice = choice.requiresDice;
-                  const hasCondition = choice.diceCondition;
-                  const meetsCondition = !needsDice || (diceRoll && 
-                    diceRoll.result >= (hasCondition?.minValue || 0) &&
-                    diceRoll.result <= (hasCondition?.maxValue || 999));
+            <>
+              {/* Check if any choice has a time limit */}
+              {currentPage.choices.some(c => c.timeLimit) ? (
+                <TimedChoice
+                  choices={currentPage.choices}
+                  timeLimit={currentPage.choices.find(c => c.timeLimit)?.timeLimit || 30}
+                  onChoiceSelect={handleChoice}
+                  onTimeout={handleTimedChoiceTimeout}
+                />
+              ) : (
+                <div className="choices-section">
+                  <h3 className="choices-title">⚔️ Que faites-vous ?</h3>
+                  <div className="choices-list">
+                    {currentPage.choices.map((choice, index) => {
+                      const needsDice = choice.requiresDice;
+                      const hasCondition = choice.diceCondition;
+                      const meetsCondition = !needsDice || (diceRoll && 
+                        diceRoll.result >= (hasCondition?.minValue || 0) &&
+                        diceRoll.result <= (hasCondition?.maxValue || 999));
+                      const hasRequiredItem = !choice.itemRequired || game.inventory?.includes(choice.itemRequired);
 
-                  return (
-                    <button
-                      key={choice._id || `choice-${index}`}
-                      onClick={() => handleChoice(choice)}
-                      disabled={makingChoice || (needsDice && !meetsCondition)}
-                      className={`choice-btn ${needsDice ? 'choice-dice' : ''} ${!meetsCondition && needsDice ? 'choice-locked' : ''}`}
-                    >
-                      <span className="choice-text">{choice.text}</span>
-                      {needsDice && (
-                        <span className="choice-requirement">
-                          🎲 {hasCondition?.diceType?.toUpperCase() || 'Dés'} 
-                          {hasCondition && ` (${hasCondition.minValue}-${hasCondition.maxValue})`}
-                          {!meetsCondition && ' 🔒'}
-                        </span>
-                      )}
-                    </button>
-                  );
-                })}
-              </div>
-            </div>
+                      return (
+                        <button
+                          key={choice._id || `choice-${index}`}
+                          onClick={() => handleChoice(choice)}
+                          disabled={makingChoice || (needsDice && !meetsCondition) || !hasRequiredItem}
+                          className={`choice-btn ${needsDice ? 'choice-dice' : ''} ${(!meetsCondition && needsDice) || !hasRequiredItem ? 'choice-locked' : ''}`}
+                        >
+                          <span className="choice-text">{choice.text}</span>
+                          {choice.itemRequired && (
+                            <span className={`choice-requirement ${hasRequiredItem ? 'requirement-met' : ''}`}>
+                              🔑 {choice.itemRequired} {!hasRequiredItem && '🔒'}
+                            </span>
+                          )}
+                          {choice.itemGiven && (
+                            <span className="choice-reward">
+                              🎁 +{choice.itemGiven}
+                            </span>
+                          )}
+                          {(choice.statsModifier?.health || choice.statsModifier?.attack || choice.statsModifier?.defense || choice.statsModifier?.magic) && (
+                            <span className="choice-stats">
+                              {choice.statsModifier.health && `❤️${choice.statsModifier.health > 0 ? '+' : ''}${choice.statsModifier.health} `}
+                              {choice.statsModifier.attack && `⚔️${choice.statsModifier.attack > 0 ? '+' : ''}${choice.statsModifier.attack} `}
+                              {choice.statsModifier.defense && `🛡️${choice.statsModifier.defense > 0 ? '+' : ''}${choice.statsModifier.defense} `}
+                              {choice.statsModifier.magic && `✨${choice.statsModifier.magic > 0 ? '+' : ''}${choice.statsModifier.magic}`}
+                            </span>
+                          )}
+                          {needsDice && (
+                            <span className="choice-requirement">
+                              🎲 {hasCondition?.diceType?.toUpperCase() || 'Dés'} 
+                              {hasCondition && ` (${hasCondition.minValue}-${hasCondition.maxValue})`}
+                              {!meetsCondition && ' 🔒'}
+                            </span>
+                          )}
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
+            </>
           )}
 
           {/* Ending Actions */}

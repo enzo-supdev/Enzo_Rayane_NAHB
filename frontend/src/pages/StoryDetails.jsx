@@ -2,8 +2,10 @@ import { useState, useEffect } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import storyService from '../services/storyService';
 import gameService from '../services/gameService';
+import commentService from '../services/commentService';
 import { useAuth } from '../hooks/useAuth';
 import Navbar from '../components/common/Navbar';
+import CommentsSection from '../components/common/CommentsSection';
 import './StoryDetails.css';
 
 const StoryDetails = () => {
@@ -182,6 +184,9 @@ const StoryDetails = () => {
               </div>
             )}
           </div>
+
+          {/* Comments Section */}
+          <CommentsSection storyId={id} commentService={commentService} />
         </div>
       </div>
     </>

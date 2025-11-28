@@ -81,6 +81,20 @@ const storySchema = new mongoose.Schema({
   estimatedDuration: {
     type: Number, // in minutes
     default: 15
+  },
+  hasInventory: {
+    type: Boolean,
+    default: false
+  },
+  hasCharacterStats: {
+    type: Boolean,
+    default: false
+  },
+  initialStats: {
+    health: { type: Number, default: 100 },
+    attack: { type: Number, default: 10 },
+    defense: { type: Number, default: 5 },
+    magic: { type: Number, default: 0 }
   }
 }, {
   timestamps: true

@@ -49,6 +49,24 @@ const choiceSchema = new mongoose.Schema({
   description: {
     type: String,
     maxlength: [500, 'Description cannot exceed 500 characters']
+  },
+  timeLimit: {
+    type: Number, // in seconds
+    default: null
+  },
+  itemRequired: {
+    type: String,
+    default: null
+  },
+  itemGiven: {
+    type: String,
+    default: null
+  },
+  statsModifier: {
+    health: { type: Number, default: 0 },
+    attack: { type: Number, default: 0 },
+    defense: { type: Number, default: 0 },
+    magic: { type: Number, default: 0 }
   }
 }, {
   timestamps: true
