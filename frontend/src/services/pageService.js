@@ -9,7 +9,7 @@ const pageService = {
 
   // Create page
   createPage: async (storyId, pageData) => {
-    const response = await api.post('/pages', { ...pageData, story: storyId });
+    const response = await api.post('/pages', { ...pageData, storyId });
     return response.data;
   },
 
