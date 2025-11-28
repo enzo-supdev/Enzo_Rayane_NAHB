@@ -3,8 +3,42 @@ import { useAuth } from '../../hooks/useAuth';
 import profileService from '../../services/profileService';
 import './ProfileCustomizer.css';
 
-const avatarStyles = ['default', 'avatar1', 'avatar2', 'avatar3', 'avatar4', 'avatar5', 'avatar6', 'avatar7', 'avatar8'];
-const avatarColors = ['#3b82f6', '#ef4444', '#10b981', '#f59e0b', '#8b5cf6', '#ec4899', '#14b8a6', '#f97316'];
+const avatarStyles = [
+  'default', 'wizard', 'warrior', 'shield', 'crown', 'archer', 'sword', 'wand', 
+  'dragon', 'lion', 'eagle', 'wolf', 'snake', 'bat', 'owl', 'boar',
+  'lightning', 'fire', 'ice', 'star', 'skull', 'ghost', 'mask', 'tent'
+];
+const avatarIcons = {
+  'default': '👤',
+  'wizard': '🧙',
+  'warrior': '⚔️',
+  'shield': '🛡️',
+  'crown': '👑',
+  'archer': '🏹',
+  'sword': '🗡️',
+  'wand': '🪄',
+  'dragon': '🐉',
+  'lion': '🦁',
+  'eagle': '🦅',
+  'wolf': '🐺',
+  'snake': '🐍',
+  'bat': '🦇',
+  'owl': '🦉',
+  'boar': '🐗',
+  'lightning': '⚡',
+  'fire': '🔥',
+  'ice': '❄️',
+  'star': '🌟',
+  'skull': '💀',
+  'ghost': '👻',
+  'mask': '🎭',
+  'tent': '🎪'
+};
+const avatarColors = [
+  '#3b82f6', '#ef4444', '#10b981', '#f59e0b', '#8b5cf6', '#ec4899', 
+  '#14b8a6', '#f97316', '#06b6d4', '#84cc16', '#eab308', '#f43f5e',
+  '#a855f7', '#6366f1', '#d946ef', '#0ea5e9', '#22c55e', '#fb923c'
+];
 const avatarFrames = ['none', 'bronze', 'silver', 'gold', 'diamond', 'legendary'];
 const profileThemes = ['light', 'dark', 'fantasy', 'scifi', 'horror', 'mystery'];
 
@@ -72,10 +106,10 @@ const ProfileCustomizer = () => {
           <h3>Preview</h3>
           <div className={`avatar-preview frame-${selectedFrame}`}>
             <div
-              className={`avatar ${selectedAvatar}`}
+              className={`avatar`}
               style={{ background: selectedColor }}
             >
-              {selectedAvatar === 'default' ? '👤' : null}
+              {avatarIcons[selectedAvatar] || '👤'}
             </div>
           </div>
           <div className="preview-info">
@@ -105,8 +139,8 @@ const ProfileCustomizer = () => {
                   className={`avatar-option ${selectedAvatar === style ? 'selected' : ''}`}
                   onClick={() => setSelectedAvatar(style)}
                 >
-                  <div className={`avatar-mini ${style}`} style={{ background: selectedColor }}>
-                    {style === 'default' ? '👤' : null}
+                  <div className={`avatar-mini`} style={{ background: selectedColor }}>
+                    {avatarIcons[style] || '👤'}
                   </div>
                 </div>
               ))}

@@ -23,7 +23,11 @@ const userProfileSchema = new mongoose.Schema({
   // Avatar Customization
   avatarStyle: {
     type: String,
-    enum: ['default', 'avatar1', 'avatar2', 'avatar3', 'avatar4', 'avatar5', 'avatar6', 'avatar7', 'avatar8'],
+    enum: [
+      'default', 'wizard', 'warrior', 'shield', 'crown', 'archer', 'sword', 'wand', 
+      'dragon', 'lion', 'eagle', 'wolf', 'snake', 'bat', 'owl', 'boar',
+      'lightning', 'fire', 'ice', 'star', 'skull', 'ghost', 'mask', 'tent'
+    ],
     default: 'default'
   },
   avatarColor: {

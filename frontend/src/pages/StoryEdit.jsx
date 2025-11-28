@@ -51,12 +51,22 @@ function StoryEdit() {
 
   const handleTogglePublish = async () => {
     try {
-      const updated = await storyService.updateStory(id, {
-        isPublished: !story.isPublished
+      // Vérifier qu'il y a une page de départ avant de publier
+      if (story.status !== 'published' && !story.startPage) {
+        alert('⚠️ Vous devez définir une page de départ avant de publier !');
+        return;
+      }
+
+      const newStatus = story.status === 'published' ? 'draft' : 'published';
+      const response = await storyService.updateStory(id, {
+        status: newStatus
       });
-      setStory(updated);
+      setStory(response.data);
+      alert(newStatus === 'published' ? '🎉 Histoire publiée avec succès !' : '📝 Histoire mise en brouillon');
     } catch (err) {
-      alert('Erreur lors de la publication');
+      const errorMsg = err.response?.data?.message || 'Erreur lors de la publication';
+      alert(errorMsg);
+      console.error(err);
     }
   };
 
@@ -129,7 +139,7 @@ function StoryEdit() {
             <div>
               <h1>✍️ {story.title}</h1>
               <p className="story-status">
-                {story.isPublished ? (
+                {story.status === 'published' ? (
                   <span className="badge badge-success">📢 Publié</span>
                 ) : (
                   <span className="badge badge-warning">📝 Brouillon</span>
@@ -142,7 +152,7 @@ function StoryEdit() {
                 className="btn btn-secondary"
                 onClick={handleTogglePublish}
               >
-                {story.isPublished ? '📥 Mettre en Brouillon' : '📢 Publier'}
+                {story.status === 'published' ? '📥 Mettre en Brouillon' : '📢 Publier'}
               </button>
               <button
                 className="btn btn-tertiary"
