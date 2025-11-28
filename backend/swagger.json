@@ -1,0 +1,1226 @@
+{
+  "openapi": "3.0.0",
+  "info": {
+    "title": "NAHB - Not Another Hero's Book API",
+    "description": "Plateforme complète de livres interactifs avec choix, lancer de dés, et aventures à plusieurs fins. Les utilisateurs peuvent créer des histoires, jouer à travers des choix multiples, et lancer des dés pour influencer le résultat.",
+    "version": "1.0.0",
+    "contact": {
+      "name": "NAHB Support",
+      "email": "support@nahb.com",
+      "url": "https://nahb.com"
+    },
+    "license": {
+      "name": "MIT",
+      "url": "https://opensource.org/licenses/MIT"
+    }
+  },
+  "servers": [
+    {
+      "url": "http://localhost:5000/api",
+      "description": "Serveur de développement"
+    },
+    {
+      "url": "https://api.nahb.com",
+      "description": "Serveur de production"
+    }
+  ],
+  "tags": [
+    { "name": "Health", "description": "Vérification de l'état du serveur" },
+    { "name": "Authentication", "description": "Gestion de l'authentification et des sessions" },
+    { "name": "Users", "description": "Gestion des profils utilisateurs" },
+    { "name": "Stories", "description": "Gestion des histoires interactives" },
+    { "name": "Pages", "description": "Gestion des pages des histoires" },
+    { "name": "Choices", "description": "Gestion des choix dans les pages" },
+    { "name": "Games", "description": "Gameplay - démarrer et jouer aux histoires" },
+    { "name": "Ratings", "description": "Système d'évaluation et commentaires" },
+    { "name": "Reports", "description": "Signalement de contenu problématique" },
+    { "name": "Statistics", "description": "Statistiques et analytiques" },
+    { "name": "Comments", "description": "Commentaires sur les pages" },
+    { "name": "Admin", "description": "Endpoints d'administration réservés aux admins" }
+  ],
+  "paths": {
+    "/health": {
+      "get": {
+        "tags": ["Health"],
+        "summary": "Vérifier l'état du serveur",
+        "description": "Endpoint de santé pour vérifier que le serveur est opérationnel",
+        "responses": {
+          "200": {
+            "description": "Serveur opérationnel",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "status": { "type": "string", "example": "OK" },
+                    "timestamp": { "type": "string", "format": "date-time", "example": "2025-11-28T10:30:00.000Z" }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/auth/register": {
+      "post": {
+        "tags": ["Authentication"],
+        "summary": "Créer un nouveau compte",
+        "description": "Créer un nouvel utilisateur avec les rôles 'reader' ou 'author'",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["username", "email", "password", "role"],
+                "properties": {
+                  "username": { "type": "string", "minLength": 3, "maxLength": 30, "example": "john_doe" },
+                  "email": { "type": "string", "format": "email", "example": "john@example.com" },
+                  "password": { "type": "string", "minLength": 8, "format": "password", "example": "securepass123" },
+                  "role": { "type": "string", "enum": ["reader", "author"], "example": "reader" }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Utilisateur créé avec succès",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": { "type": "boolean", "example": true },
+                    "data": {
+                      "type": "object",
+                      "properties": {
+                        "user": { "$ref": "#/components/schemas/User" },
+                        "token": { "type": "string", "example": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..." }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Erreur de validation (email déjà utilisé, mot de passe faible, etc.)"
+          }
+        }
+      }
+    },
+    "/auth/login": {
+      "post": {
+        "tags": ["Authentication"],
+        "summary": "Se connecter",
+        "description": "Authentifier un utilisateur et récupérer un token JWT",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["email", "password"],
+                "properties": {
+                  "email": { "type": "string", "format": "email", "example": "john@example.com" },
+                  "password": { "type": "string", "format": "password", "example": "securepass123" }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Connexion réussie",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": { "type": "boolean", "example": true },
+                    "data": {
+                      "type": "object",
+                      "properties": {
+                        "user": { "$ref": "#/components/schemas/User" },
+                        "token": { "type": "string" }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": { "description": "Identifiants invalides" },
+          "429": { "description": "Trop de tentatives de connexion (rate limiting)" }
+        }
+      }
+    },
+    "/auth/me": {
+      "get": {
+        "tags": ["Authentication"],
+        "summary": "Récupérer l'utilisateur connecté",
+        "security": [{ "bearerAuth": [] }],
+        "responses": {
+          "200": {
+            "description": "Informations de l'utilisateur",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": { "type": "boolean", "example": true },
+                    "data": { "$ref": "#/components/schemas/User" }
+                  }
+                }
+              }
+            }
+          },
+          "401": { "description": "Non authentifié ou token invalide" }
+        }
+      }
+    },
+    "/users/{id}": {
+      "get": {
+        "tags": ["Users"],
+        "summary": "Récupérer le profil d'un utilisateur",
+        "parameters": [
+          { "name": "id", "in": "path", "required": true, "schema": { "type": "string" }, "description": "ID MongoDB de l'utilisateur" }
+        ],
+        "responses": {
+          "200": {
+            "description": "Profil utilisateur",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/User" }
+              }
+            }
+          },
+          "404": { "description": "Utilisateur non trouvé" }
+        }
+      },
+      "put": {
+        "tags": ["Users"],
+        "summary": "Mettre à jour le profil",
+        "security": [{ "bearerAuth": [] }],
+        "parameters": [
+          { "name": "id", "in": "path", "required": true, "schema": { "type": "string" } }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "username": { "type": "string", "minLength": 3, "maxLength": 30 },
+                  "email": { "type": "string", "format": "email" }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": { "description": "Profil mis à jour", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/User" } } } },
+          "401": { "description": "Non authentifié" },
+          "403": { "description": "Pas de permission pour modifier ce profil" }
+        }
+      }
+    },
+    "/stories": {
+      "get": {
+        "tags": ["Stories"],
+        "summary": "Récupérer toutes les histoires",
+        "description": "Récupère la liste paginée des histoires publiées avec filtres et tri",
+        "parameters": [
+          { "name": "search", "in": "query", "schema": { "type": "string" }, "description": "Rechercher dans titre, description et tags" },
+          { "name": "theme", "in": "query", "schema": { "type": "string", "enum": ["fantasy", "sci-fi", "horror", "mystery", "romance", "adventure", "historical", "other"] }, "description": "Filtrer par thème" },
+          { "name": "sort", "in": "query", "schema": { "type": "string", "enum": ["popular", "rating", "default"], "default": "default" }, "description": "Critère de tri" },
+          { "name": "page", "in": "query", "schema": { "type": "integer", "default": 1, "minimum": 1 } },
+          { "name": "limit", "in": "query", "schema": { "type": "integer", "default": 10, "minimum": 1, "maximum": 100 } }
+        ],
+        "responses": {
+          "200": {
+            "description": "Liste des histoires",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": { "type": "boolean", "example": true },
+                    "data": { "type": "array", "items": { "$ref": "#/components/schemas/Story" } },
+                    "pagination": { "$ref": "#/components/schemas/Pagination" }
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": ["Stories"],
+        "summary": "Créer une nouvelle histoire",
+        "security": [{ "bearerAuth": [] }],
+        "description": "Créer une histoire (réservé aux auteurs). L'histoire est créée en mode brouillon.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["title", "description", "theme"],
+                "properties": {
+                  "title": { "type": "string", "minLength": 3, "maxLength": 200, "example": "La Quête du Dragon" },
+                  "description": { "type": "string", "minLength": 10, "maxLength": 5000, "example": "Une aventure épique..." },
+                  "theme": { "type": "string", "enum": ["fantasy", "sci-fi", "horror", "mystery", "romance", "adventure", "historical", "other"] },
+                  "tags": { "type": "string", "example": "dragon, aventure, magie" },
+                  "difficulty": { "type": "string", "enum": ["easy", "medium", "hard"] },
+                  "estimatedDuration": { "type": "number", "description": "Durée estimée en minutes", "example": 30 }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Histoire créée",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": { "type": "boolean", "example": true },
+                    "data": { "$ref": "#/components/schemas/Story" }
+                  }
+                }
+              }
+            }
+          },
+          "401": { "description": "Non authentifié" }
+        }
+      }
+    },
+    "/stories/{id}": {
+      "get": {
+        "tags": ["Stories"],
+        "summary": "Récupérer les détails d'une histoire",
+        "parameters": [
+          { "name": "id", "in": "path", "required": true, "schema": { "type": "string" } }
+        ],
+        "responses": {
+          "200": { "description": "Détails de l'histoire", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/StoryDetail" } } } },
+          "404": { "description": "Histoire non trouvée" }
+        }
+      },
+      "put": {
+        "tags": ["Stories"],
+        "summary": "Mettre à jour une histoire",
+        "security": [{ "bearerAuth": [] }],
+        "parameters": [
+          { "name": "id", "in": "path", "required": true, "schema": { "type": "string" } }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "title": { "type": "string" },
+                  "description": { "type": "string" },
+                  "theme": { "type": "string" },
+                  "tags": { "type": "string" },
+                  "difficulty": { "type": "string" }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": { "description": "Histoire mise à jour" },
+          "401": { "description": "Non authentifié" },
+          "403": { "description": "Vous n'êtes pas l'auteur de cette histoire" }
+        }
+      },
+      "delete": {
+        "tags": ["Stories"],
+        "summary": "Supprimer une histoire",
+        "security": [{ "bearerAuth": [] }],
+        "parameters": [
+          { "name": "id", "in": "path", "required": true, "schema": { "type": "string" } }
+        ],
+        "responses": {
+          "200": { "description": "Histoire supprimée" },
+          "403": { "description": "Vous n'êtes pas l'auteur de cette histoire" }
+        }
+      }
+    },
+    "/stories/{id}/cover": {
+      "post": {
+        "tags": ["Stories"],
+        "summary": "Uploader la couverture d'une histoire",
+        "security": [{ "bearerAuth": [] }],
+        "parameters": [
+          { "name": "id", "in": "path", "required": true, "schema": { "type": "string" } }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "type": "object",
+                "required": ["cover"],
+                "properties": {
+                  "cover": { "type": "string", "format": "binary", "description": "Fichier image (max 5MB, formats: jpeg, jpg, png, gif, webp)" }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": { "description": "Couverture uploadée" },
+          "400": { "description": "Fichier invalide ou trop volumineux" },
+          "401": { "description": "Non authentifié" }
+        }
+      }
+    },
+    "/pages": {
+      "post": {
+        "tags": ["Pages"],
+        "summary": "Créer une nouvelle page",
+        "security": [{ "bearerAuth": [] }],
+        "description": "Créer une page (simple ou finale) pour une histoire",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["storyId", "content"],
+                "properties": {
+                  "storyId": { "type": "string" },
+                  "title": { "type": "string", "example": "La Porte Mystérieuse" },
+                  "content": { "type": "string", "minLength": 1, "example": "Vous vous tenez devant une porte ancienne..." },
+                  "isEnding": { "type": "boolean", "default": false },
+                  "endingLabel": { "type": "string", "example": "Fin Héroïque" },
+                  "endingType": { "type": "string", "enum": ["heroic", "tragic", "bittersweet", "comic", "mysterious"] },
+                  "orderIndex": { "type": "number", "example": 1 }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Page créée",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": { "type": "boolean", "example": true },
+                    "data": { "$ref": "#/components/schemas/Page" }
+                  }
+                }
+              }
+            }
+          },
+          "400": { "description": "Données invalides" },
+          "401": { "description": "Non authentifié" }
+        }
+      }
+    },
+    "/pages/{id}": {
+      "get": {
+        "tags": ["Pages"],
+        "summary": "Récupérer les détails d'une page",
+        "parameters": [
+          { "name": "id", "in": "path", "required": true, "schema": { "type": "string" } }
+        ],
+        "responses": {
+          "200": { "description": "Détails de la page", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/PageDetail" } } } },
+          "404": { "description": "Page non trouvée" }
+        }
+      },
+      "put": {
+        "tags": ["Pages"],
+        "summary": "Mettre à jour une page",
+        "security": [{ "bearerAuth": [] }],
+        "parameters": [
+          { "name": "id", "in": "path", "required": true, "schema": { "type": "string" } }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "title": { "type": "string" },
+                  "content": { "type": "string" },
+                  "orderIndex": { "type": "number" }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": { "description": "Page mise à jour" },
+          "401": { "description": "Non authentifié" }
+        }
+      },
+      "delete": {
+        "tags": ["Pages"],
+        "summary": "Supprimer une page",
+        "security": [{ "bearerAuth": [] }],
+        "parameters": [
+          { "name": "id", "in": "path", "required": true, "schema": { "type": "string" } }
+        ],
+        "responses": {
+          "200": { "description": "Page supprimée" },
+          "401": { "description": "Non authentifié" }
+        }
+      }
+    },
+    "/pages/{id}/image": {
+      "post": {
+        "tags": ["Pages"],
+        "summary": "Uploader une image pour une page",
+        "security": [{ "bearerAuth": [] }],
+        "parameters": [
+          { "name": "id", "in": "path", "required": true, "schema": { "type": "string" } }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "type": "object",
+                "required": ["image"],
+                "properties": {
+                  "image": { "type": "string", "format": "binary" }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": { "description": "Image uploadée" },
+          "401": { "description": "Non authentifié" }
+        }
+      }
+    },
+    "/pages/{id}/zones": {
+      "post": {
+        "tags": ["Pages"],
+        "summary": "Ajouter une zone interactive à une page",
+        "security": [{ "bearerAuth": [] }],
+        "parameters": [
+          { "name": "id", "in": "path", "required": true, "schema": { "type": "string" } }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "x": { "type": "number", "description": "Coordonnée X" },
+                  "y": { "type": "number", "description": "Coordonnée Y" },
+                  "width": { "type": "number", "description": "Largeur de la zone" },
+                  "height": { "type": "number", "description": "Hauteur de la zone" },
+                  "shape": { "type": "string", "enum": ["rectangle", "circle", "polygon"] },
+                  "targetPage": { "type": "string", "description": "ID de la page cible" },
+                  "description": { "type": "string" }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": { "description": "Zone ajoutée" },
+          "401": { "description": "Non authentifié" }
+        }
+      }
+    },
+    "/choices": {
+      "post": {
+        "tags": ["Choices"],
+        "summary": "Créer un choix pour une page",
+        "security": [{ "bearerAuth": [] }],
+        "description": "Créer un choix simple ou avec condition de dé",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["pageId", "text", "targetPage"],
+                "properties": {
+                  "pageId": { "type": "string" },
+                  "text": { "type": "string", "minLength": 1, "example": "Ouvrir la porte" },
+                  "targetPage": { "type": "string" },
+                  "requiresDice": { "type": "boolean", "default": false },
+                  "diceCondition": {
+                    "type": "object",
+                    "properties": {
+                      "diceType": { "type": "string", "example": "d20", "description": "Type de dé (d4, d6, d8, d10, d12, d20, d100)" },
+                      "minValue": { "type": "number", "example": 12 },
+                      "maxValue": { "type": "number", "example": 20 }
+                    }
+                  },
+                  "description": { "type": "string", "example": "Nécessite un jet de dé" },
+                  "orderIndex": { "type": "number" }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Choix créé",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": { "type": "boolean", "example": true },
+                    "data": { "$ref": "#/components/schemas/Choice" }
+                  }
+                }
+              }
+            }
+          },
+          "401": { "description": "Non authentifié" }
+        }
+      }
+    },
+    "/choices/{id}": {
+      "put": {
+        "tags": ["Choices"],
+        "summary": "Mettre à jour un choix",
+        "security": [{ "bearerAuth": [] }],
+        "parameters": [
+          { "name": "id", "in": "path", "required": true, "schema": { "type": "string" } }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "text": { "type": "string" },
+                  "targetPage": { "type": "string" }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": { "description": "Choix mis à jour" },
+          "401": { "description": "Non authentifié" }
+        }
+      },
+      "delete": {
+        "tags": ["Choices"],
+        "summary": "Supprimer un choix",
+        "security": [{ "bearerAuth": [] }],
+        "parameters": [
+          { "name": "id", "in": "path", "required": true, "schema": { "type": "string" } }
+        ],
+        "responses": {
+          "200": { "description": "Choix supprimé" },
+          "401": { "description": "Non authentifié" }
+        }
+      }
+    },
+    "/games/start": {
+      "post": {
+        "tags": ["Games"],
+        "summary": "Démarrer une partie",
+        "security": [{ "bearerAuth": [] }],
+        "description": "Commencer à jouer une histoire depuis le début",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["storyId"],
+                "properties": {
+                  "storyId": { "type": "string" },
+                  "isPreview": { "type": "boolean", "default": false, "description": "Mode aperçu (ne compte pas les statistiques)" }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Partie créée et lancée",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": { "type": "boolean", "example": true },
+                    "data": { "$ref": "#/components/schemas/Game" }
+                  }
+                }
+              }
+            }
+          },
+          "404": { "description": "Histoire non trouvée" },
+          "401": { "description": "Non authentifié" }
+        }
+      }
+    },
+    "/games/{id}": {
+      "get": {
+        "tags": ["Games"],
+        "summary": "Récupérer les détails d'une partie",
+        "security": [{ "bearerAuth": [] }],
+        "parameters": [
+          { "name": "id", "in": "path", "required": true, "schema": { "type": "string" } }
+        ],
+        "responses": {
+          "200": {
+            "description": "Détails de la partie",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": { "type": "boolean", "example": true },
+                    "data": { "$ref": "#/components/schemas/Game" }
+                  }
+                }
+              }
+            }
+          },
+          "401": { "description": "Non authentifié" },
+          "404": { "description": "Partie non trouvée" }
+        }
+      }
+    },
+    "/games/{gameId}/choose": {
+      "post": {
+        "tags": ["Games"],
+        "summary": "Faire un choix dans le jeu",
+        "security": [{ "bearerAuth": [] }],
+        "parameters": [
+          { "name": "gameId", "in": "path", "required": true, "schema": { "type": "string" } }
+        ],
+        "description": "Sélectionner un choix et passer à la page suivante. Si le choix nécessite un dé, fournir le résultat du jet.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["choiceId"],
+                "properties": {
+                  "choiceId": { "type": "string" },
+                  "diceRoll": { "type": "number", "description": "Résultat du dé (si requis par le choix)" }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Choix enregistré et page suivante retournée",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": { "type": "boolean", "example": true },
+                    "data": { "$ref": "#/components/schemas/Game" },
+                    "diceRoll": { "type": "number", "description": "Résultat du jet si applicable" }
+                  }
+                }
+              }
+            }
+          },
+          "400": { "description": "Choix invalide ou dé échoué" },
+          "401": { "description": "Non authentifié" }
+        }
+      }
+    },
+    "/games/dice/roll": {
+      "post": {
+        "tags": ["Games"],
+        "summary": "Lancer un dé",
+        "security": [{ "bearerAuth": [] }],
+        "description": "Simuler le lancer d'un dé de jeu de rôle",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["diceType"],
+                "properties": {
+                  "diceType": { "type": "string", "enum": ["d4", "d6", "d8", "d10", "d12", "d20", "d100"], "example": "d20" }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Résultat du dé",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "roll": { "type": "number", "example": 15 },
+                    "diceType": { "type": "string", "example": "d20" }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/games/story/{storyId}/endings": {
+      "get": {
+        "tags": ["Games"],
+        "summary": "Récupérer les fins débloquées pour une histoire",
+        "security": [{ "bearerAuth": [] }],
+        "parameters": [
+          { "name": "storyId", "in": "path", "required": true, "schema": { "type": "string" } }
+        ],
+        "responses": {
+          "200": {
+            "description": "Fins débloquées par le joueur",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": { "type": "boolean", "example": true },
+                    "data": {
+                      "type": "object",
+                      "properties": {
+                        "unlockedEndings": { "type": "array", "items": { "$ref": "#/components/schemas/Ending" } },
+                        "totalEndings": { "type": "number" }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/ratings": {
+      "post": {
+        "tags": ["Ratings"],
+        "summary": "Créer ou mettre à jour une évaluation",
+        "security": [{ "bearerAuth": [] }],
+        "description": "Noter une histoire (1-5 étoiles) avec un commentaire optionnel",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["storyId", "rating"],
+                "properties": {
+                  "storyId": { "type": "string" },
+                  "rating": { "type": "number", "minimum": 1, "maximum": 5, "example": 5 },
+                  "comment": { "type": "string", "maxLength": 1000, "example": "Histoire incroyable !" }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Évaluation créée",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": { "type": "boolean", "example": true },
+                    "data": { "$ref": "#/components/schemas/Rating" }
+                  }
+                }
+              }
+            }
+          },
+          "401": { "description": "Non authentifié" }
+        }
+      }
+    },
+    "/ratings/story/{storyId}": {
+      "get": {
+        "tags": ["Ratings"],
+        "summary": "Récupérer les évaluations d'une histoire",
+        "parameters": [
+          { "name": "storyId", "in": "path", "required": true, "schema": { "type": "string" } },
+          { "name": "page", "in": "query", "schema": { "type": "integer", "default": 1 } },
+          { "name": "limit", "in": "query", "schema": { "type": "integer", "default": 10 } }
+        ],
+        "responses": {
+          "200": {
+            "description": "Liste des évaluations",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": { "type": "boolean", "example": true },
+                    "data": { "type": "array", "items": { "$ref": "#/components/schemas/Rating" } },
+                    "pagination": { "$ref": "#/components/schemas/Pagination" }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/reports": {
+      "post": {
+        "tags": ["Reports"],
+        "summary": "Signaler une histoire",
+        "security": [{ "bearerAuth": [] }],
+        "description": "Signaler du contenu inapproprié ou problématique",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["storyId", "reason"],
+                "properties": {
+                  "storyId": { "type": "string" },
+                  "reason": { "type": "string", "enum": ["inappropriate_content", "spam", "copyright", "offensive", "misleading", "broken", "other"] },
+                  "description": { "type": "string", "maxLength": 1000 }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Rapport créé",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": { "type": "boolean", "example": true },
+                    "data": { "$ref": "#/components/schemas/Report" }
+                  }
+                }
+              }
+            }
+          },
+          "401": { "description": "Non authentifié" }
+        }
+      }
+    },
+    "/statistics/story/{storyId}": {
+      "get": {
+        "tags": ["Statistics"],
+        "summary": "Récupérer les statistiques d'une histoire",
+        "security": [{ "bearerAuth": [] }],
+        "parameters": [
+          { "name": "storyId", "in": "path", "required": true, "schema": { "type": "string" } }
+        ],
+        "description": "Statistiques détaillées (auteur/admin uniquement)",
+        "responses": {
+          "200": {
+            "description": "Statistiques de l'histoire",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": { "type": "boolean", "example": true },
+                    "data": { "$ref": "#/components/schemas/StoryStatistics" }
+                  }
+                }
+              }
+            }
+          },
+          "401": { "description": "Non authentifié" },
+          "403": { "description": "Vous n'avez pas accès à ces statistiques" }
+        }
+      }
+    },
+    "/statistics/author/{authorId}": {
+      "get": {
+        "tags": ["Statistics"],
+        "summary": "Récupérer les statistiques d'un auteur",
+        "security": [{ "bearerAuth": [] }],
+        "parameters": [
+          { "name": "authorId", "in": "path", "required": true, "schema": { "type": "string" } }
+        ],
+        "responses": {
+          "200": { "description": "Statistiques de l'auteur" },
+          "403": { "description": "Non autorisé" }
+        }
+      }
+    },
+    "/admin/users": {
+      "get": {
+        "tags": ["Admin"],
+        "summary": "Récupérer la liste des utilisateurs",
+        "security": [{ "bearerAuth": [] }],
+        "description": "Admin uniquement - Récupère tous les utilisateurs avec filtres",
+        "parameters": [
+          { "name": "role", "in": "query", "schema": { "type": "string", "enum": ["reader", "author", "admin"] } },
+          { "name": "search", "in": "query", "schema": { "type": "string" } },
+          { "name": "page", "in": "query", "schema": { "type": "integer", "default": 1 } }
+        ],
+        "responses": {
+          "200": { "description": "Liste des utilisateurs" },
+          "403": { "description": "Accès refusé (Admin requis)" }
+        }
+      }
+    },
+    "/admin/users/{id}/ban": {
+      "put": {
+        "tags": ["Admin"],
+        "summary": "Bannir un utilisateur",
+        "security": [{ "bearerAuth": [] }],
+        "parameters": [
+          { "name": "id", "in": "path", "required": true, "schema": { "type": "string" } }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "reason": { "type": "string" }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": { "description": "Utilisateur banni" },
+          "403": { "description": "Admin requis" }
+        }
+      }
+    },
+    "/admin/stories/{id}/suspend": {
+      "put": {
+        "tags": ["Admin"],
+        "summary": "Suspendre une histoire",
+        "security": [{ "bearerAuth": [] }],
+        "parameters": [
+          { "name": "id", "in": "path", "required": true, "schema": { "type": "string" } }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "reason": { "type": "string" }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": { "description": "Histoire suspendue" },
+          "403": { "description": "Admin requis" }
+        }
+      }
+    },
+    "/admin/dashboard": {
+      "get": {
+        "tags": ["Admin"],
+        "summary": "Récupérer le tableau de bord admin",
+        "security": [{ "bearerAuth": [] }],
+        "responses": {
+          "200": { "description": "Statistiques globales du platform" },
+          "403": { "description": "Admin requis" }
+        }
+      }
+    }
+  },
+  "components": {
+    "securitySchemes": {
+      "bearerAuth": {
+        "type": "http",
+        "scheme": "bearer",
+        "bearerFormat": "JWT",
+        "description": "Entrez le token JWT reçu lors de la connexion. Format: Bearer <token>"
+      }
+    },
+    "schemas": {
+      "User": {
+        "type": "object",
+        "properties": {
+          "_id": { "type": "string", "example": "507f1f77bcf86cd799439011" },
+          "username": { "type": "string", "example": "john_doe" },
+          "email": { "type": "string", "format": "email", "example": "john@example.com" },
+          "role": { "type": "string", "enum": ["reader", "author", "admin"], "example": "author" },
+          "avatar": { "type": "string", "example": "/uploads/avatars/user123.jpg" },
+          "createdAt": { "type": "string", "format": "date-time" },
+          "updatedAt": { "type": "string", "format": "date-time" },
+          "banned": { "type": "boolean", "example": false }
+        }
+      },
+      "Story": {
+        "type": "object",
+        "properties": {
+          "_id": { "type": "string" },
+          "title": { "type": "string", "example": "La Quête du Dragon" },
+          "description": { "type": "string" },
+          "author": { "type": "object", "properties": { "_id": { "type": "string" }, "username": { "type": "string" } } },
+          "theme": { "type": "string" },
+          "difficulty": { "type": "string" },
+          "tags": { "type": "array", "items": { "type": "string" } },
+          "coverImage": { "type": "string" },
+          "estimatedDuration": { "type": "number" },
+          "totalPlays": { "type": "number" },
+          "averageRating": { "type": "number" },
+          "published": { "type": "boolean" },
+          "createdAt": { "type": "string", "format": "date-time" }
+        }
+      },
+      "StoryDetail": {
+        "allOf": [
+          { "$ref": "#/components/schemas/Story" },
+          {
+            "type": "object",
+            "properties": {
+              "pages": { "type": "array", "items": { "$ref": "#/components/schemas/Page" } }
+            }
+          }
+        ]
+      },
+      "Page": {
+        "type": "object",
+        "properties": {
+          "_id": { "type": "string" },
+          "storyId": { "type": "string" },
+          "title": { "type": "string" },
+          "content": { "type": "string" },
+          "image": { "type": "string" },
+          "isEnding": { "type": "boolean" },
+          "endingLabel": { "type": "string" },
+          "endingType": { "type": "string" },
+          "orderIndex": { "type": "number" },
+          "interactiveZones": { "type": "array", "items": { "type": "object" } }
+        }
+      },
+      "PageDetail": {
+        "allOf": [
+          { "$ref": "#/components/schemas/Page" },
+          {
+            "type": "object",
+            "properties": {
+              "choices": { "type": "array", "items": { "$ref": "#/components/schemas/Choice" } }
+            }
+          }
+        ]
+      },
+      "Choice": {
+        "type": "object",
+        "properties": {
+          "_id": { "type": "string" },
+          "pageId": { "type": "string" },
+          "text": { "type": "string" },
+          "targetPage": { "type": "string" },
+          "requiresDice": { "type": "boolean" },
+          "diceCondition": { "type": "object", "properties": { "diceType": { "type": "string" }, "minValue": { "type": "number" }, "maxValue": { "type": "number" } } },
+          "description": { "type": "string" },
+          "orderIndex": { "type": "number" }
+        }
+      },
+      "Game": {
+        "type": "object",
+        "properties": {
+          "_id": { "type": "string" },
+          "story": { "type": "object" },
+          "player": { "type": "string" },
+          "status": { "type": "string", "enum": ["in_progress", "completed", "abandoned"] },
+          "currentPage": { "type": "object" },
+          "path": { "type": "array", "items": { "type": "object", "properties": { "pageId": { "type": "string" }, "choiceId": { "type": "string" }, "diceRoll": { "type": "number" } } } },
+          "duration": { "type": "number" },
+          "endingReached": { "type": "object" },
+          "createdAt": { "type": "string", "format": "date-time" },
+          "updatedAt": { "type": "string", "format": "date-time" }
+        }
+      },
+      "Ending": {
+        "type": "object",
+        "properties": {
+          "_id": { "type": "string" },
+          "endingLabel": { "type": "string", "example": "Fin Héroïque" },
+          "endingType": { "type": "string", "example": "heroic" },
+          "count": { "type": "number" }
+        }
+      },
+      "Rating": {
+        "type": "object",
+        "properties": {
+          "_id": { "type": "string" },
+          "story": { "type": "string" },
+          "user": { "type": "object", "properties": { "_id": { "type": "string" }, "username": { "type": "string" } } },
+          "rating": { "type": "number", "minimum": 1, "maximum": 5 },
+          "comment": { "type": "string" },
+          "createdAt": { "type": "string", "format": "date-time" }
+        }
+      },
+      "Report": {
+        "type": "object",
+        "properties": {
+          "_id": { "type": "string" },
+          "story": { "type": "string" },
+          "reporter": { "type": "string" },
+          "reason": { "type": "string" },
+          "description": { "type": "string" },
+          "status": { "type": "string", "enum": ["pending", "reviewed", "resolved", "dismissed"] },
+          "createdAt": { "type": "string", "format": "date-time" }
+        }
+      },
+      "StoryStatistics": {
+        "type": "object",
+        "properties": {
+          "overview": {
+            "type": "object",
+            "properties": {
+              "totalPlays": { "type": "number" },
+              "totalCompletions": { "type": "number" },
+              "completionRate": { "type": "string" },
+              "averageRating": { "type": "string" },
+              "totalRatings": { "type": "number" },
+              "averageDuration": { "type": "number" }
+            }
+          },
+          "gameStatus": { "type": "object" },
+          "endings": { "type": "object" },
+          "popularPages": { "type": "array" },
+          "popularChoices": { "type": "array" }
+        }
+      },
+      "Pagination": {
+        "type": "object",
+        "properties": {
+          "currentPage": { "type": "integer" },
+          "totalPages": { "type": "integer" },
+          "totalResults": { "type": "integer" },
+          "limit": { "type": "integer" },
+          "hasNext": { "type": "boolean" },
+          "hasPrev": { "type": "boolean" }
+        }
+      }
+    }
+  }
+}

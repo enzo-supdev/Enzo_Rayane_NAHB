@@ -1,0 +1,645 @@
+{
+  "info": {
+    "_postman_id": "nahb-api-collection",
+    "name": "NAHB API - Not Another Hero's Book",
+    "description": "Collection Postman pour tester l'API NAHB",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "Authentication",
+      "item": [
+        {
+          "name": "Register",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"username\": \"aventurier\",\n  \"email\": \"aventurier@example.com\",\n  \"password\": \"SecurePass123!\",\n  \"role\": \"author\"\n}"
+            },
+            "url": {
+              "raw": "http://localhost:5000/api/auth/register",
+              "protocol": "http",
+              "host": ["localhost"],
+              "port": "5000",
+              "path": ["api", "auth", "register"]
+            }
+          }
+        },
+        {
+          "name": "Login",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"aventurier@example.com\",\n  \"password\": \"SecurePass123!\"\n}"
+            },
+            "url": {
+              "raw": "http://localhost:5000/api/auth/login",
+              "protocol": "http",
+              "host": ["localhost"],
+              "port": "5000",
+              "path": ["api", "auth", "login"]
+            }
+          }
+        },
+        {
+          "name": "Get Current User",
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
+            "url": {
+              "raw": "http://localhost:5000/api/auth/me",
+              "protocol": "http",
+              "host": ["localhost"],
+              "port": "5000",
+              "path": ["api", "auth", "me"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Stories",
+      "item": [
+        {
+          "name": "Get All Stories",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "http://localhost:5000/api/stories?page=1&limit=10&theme=fantasy&sort=popular",
+              "protocol": "http",
+              "host": ["localhost"],
+              "port": "5000",
+              "path": ["api", "stories"],
+              "query": [
+                { "key": "page", "value": "1" },
+                { "key": "limit", "value": "10" },
+                { "key": "theme", "value": "fantasy" },
+                { "key": "sort", "value": "popular" }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Create Story",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"La Caverne Oubliée\",\n  \"description\": \"Une aventure souterraine remplie de mystères et de trésors cachés...\",\n  \"theme\": \"fantasy\",\n  \"tags\": \"cave, trésor, dragon, magie\",\n  \"difficulty\": \"hard\",\n  \"estimatedDuration\": 45\n}"
+            },
+            "url": {
+              "raw": "http://localhost:5000/api/stories",
+              "protocol": "http",
+              "host": ["localhost"],
+              "port": "5000",
+              "path": ["api", "stories"]
+            }
+          }
+        },
+        {
+          "name": "Get Story Details",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "http://localhost:5000/api/stories/{{storyId}}",
+              "protocol": "http",
+              "host": ["localhost"],
+              "port": "5000",
+              "path": ["api", "stories", "{{storyId}}"]
+            }
+          }
+        },
+        {
+          "name": "Update Story",
+          "request": {
+            "method": "PUT",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"La Caverne Oubliée - Edition Revisitée\",\n  \"description\": \"Une version améliorée de l'aventure...\"\n}"
+            },
+            "url": {
+              "raw": "http://localhost:5000/api/stories/{{storyId}}",
+              "protocol": "http",
+              "host": ["localhost"],
+              "port": "5000",
+              "path": ["api", "stories", "{{storyId}}"]
+            }
+          }
+        },
+        {
+          "name": "Delete Story",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
+            "url": {
+              "raw": "http://localhost:5000/api/stories/{{storyId}}",
+              "protocol": "http",
+              "host": ["localhost"],
+              "port": "5000",
+              "path": ["api", "stories", "{{storyId}}"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Pages",
+      "item": [
+        {
+          "name": "Create Page",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"storyId\": \"{{storyId}}\",\n  \"title\": \"L'Entrée de la Caverne\",\n  \"content\": \"Vous vous tenez devant une grande caverne sombre. L'air frais qui en émane vous frissonne. Des cristaux brillent faiblement à l'intérieur.\",\n  \"orderIndex\": 1,\n  \"isEnding\": false\n}"
+            },
+            "url": {
+              "raw": "http://localhost:5000/api/pages",
+              "protocol": "http",
+              "host": ["localhost"],
+              "port": "5000",
+              "path": ["api", "pages"]
+            }
+          }
+        },
+        {
+          "name": "Get Page Details",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "http://localhost:5000/api/pages/{{pageId}}",
+              "protocol": "http",
+              "host": ["localhost"],
+              "port": "5000",
+              "path": ["api", "pages", "{{pageId}}"]
+            }
+          }
+        },
+        {
+          "name": "Update Page",
+          "request": {
+            "method": "PUT",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"L'Entrée Principale\",\n  \"content\": \"Contenu mis à jour...\"\n}"
+            },
+            "url": {
+              "raw": "http://localhost:5000/api/pages/{{pageId}}",
+              "protocol": "http",
+              "host": ["localhost"],
+              "port": "5000",
+              "path": ["api", "pages", "{{pageId}}"]
+            }
+          }
+        },
+        {
+          "name": "Create Ending Page",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"storyId\": \"{{storyId}}\",\n  \"content\": \"Vous avez vaincu le dragon ! La caverne s'effondre derrière vous tandis que vous remontez à la surface.\",\n  \"isEnding\": true,\n  \"endingLabel\": \"Fin Héroïque\",\n  \"endingType\": \"heroic\",\n  \"orderIndex\": 10\n}"
+            },
+            "url": {
+              "raw": "http://localhost:5000/api/pages",
+              "protocol": "http",
+              "host": ["localhost"],
+              "port": "5000",
+              "path": ["api", "pages"]
+            }
+          }
+        },
+        {
+          "name": "Delete Page",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
+            "url": {
+              "raw": "http://localhost:5000/api/pages/{{pageId}}",
+              "protocol": "http",
+              "host": ["localhost"],
+              "port": "5000",
+              "path": ["api", "pages", "{{pageId}}"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Choices",
+      "item": [
+        {
+          "name": "Create Simple Choice",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"pageId\": \"{{pageId}}\",\n  \"text\": \"Entrer dans la caverne\",\n  \"targetPage\": \"{{targetPageId}}\",\n  \"orderIndex\": 1\n}"
+            },
+            "url": {
+              "raw": "http://localhost:5000/api/choices",
+              "protocol": "http",
+              "host": ["localhost"],
+              "port": "5000",
+              "path": ["api", "choices"]
+            }
+          }
+        },
+        {
+          "name": "Create Choice with Dice",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"pageId\": \"{{pageId}}\",\n  \"text\": \"Crocheter la serrure\",\n  \"targetPage\": \"{{targetPageId}}\",\n  \"requiresDice\": true,\n  \"diceCondition\": {\n    \"diceType\": \"d20\",\n    \"minValue\": 12,\n    \"maxValue\": 20\n  },\n  \"description\": \"Vous devez obtenir au moins 12 sur 1d20\",\n  \"orderIndex\": 2\n}"
+            },
+            "url": {
+              "raw": "http://localhost:5000/api/choices",
+              "protocol": "http",
+              "host": ["localhost"],
+              "port": "5000",
+              "path": ["api", "choices"]
+            }
+          }
+        },
+        {
+          "name": "Update Choice",
+          "request": {
+            "method": "PUT",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"text\": \"Entrer courageusement dans la caverne\"\n}"
+            },
+            "url": {
+              "raw": "http://localhost:5000/api/choices/{{choiceId}}",
+              "protocol": "http",
+              "host": ["localhost"],
+              "port": "5000",
+              "path": ["api", "choices", "{{choiceId}}"]
+            }
+          }
+        },
+        {
+          "name": "Delete Choice",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
+            "url": {
+              "raw": "http://localhost:5000/api/choices/{{choiceId}}",
+              "protocol": "http",
+              "host": ["localhost"],
+              "port": "5000",
+              "path": ["api", "choices", "{{choiceId}}"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Games",
+      "item": [
+        {
+          "name": "Start Game",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"storyId\": \"{{storyId}}\",\n  \"isPreview\": false\n}"
+            },
+            "url": {
+              "raw": "http://localhost:5000/api/games/start",
+              "protocol": "http",
+              "host": ["localhost"],
+              "port": "5000",
+              "path": ["api", "games", "start"]
+            }
+          }
+        },
+        {
+          "name": "Get Game Status",
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
+            "url": {
+              "raw": "http://localhost:5000/api/games/{{gameId}}",
+              "protocol": "http",
+              "host": ["localhost"],
+              "port": "5000",
+              "path": ["api", "games", "{{gameId}}"]
+            }
+          }
+        },
+        {
+          "name": "Make Choice",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"choiceId\": \"{{choiceId}}\"\n}"
+            },
+            "url": {
+              "raw": "http://localhost:5000/api/games/{{gameId}}/choose",
+              "protocol": "http",
+              "host": ["localhost"],
+              "port": "5000",
+              "path": ["api", "games", "{{gameId}}", "choose"]
+            }
+          }
+        },
+        {
+          "name": "Make Choice with Dice",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"choiceId\": \"{{choiceId}}\",\n  \"diceRoll\": 15\n}"
+            },
+            "url": {
+              "raw": "http://localhost:5000/api/games/{{gameId}}/choose",
+              "protocol": "http",
+              "host": ["localhost"],
+              "port": "5000",
+              "path": ["api", "games", "{{gameId}}", "choose"]
+            }
+          }
+        },
+        {
+          "name": "Roll Dice",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"diceType\": \"d20\"\n}"
+            },
+            "url": {
+              "raw": "http://localhost:5000/api/games/dice/roll",
+              "protocol": "http",
+              "host": ["localhost"],
+              "port": "5000",
+              "path": ["api", "games", "dice", "roll"]
+            }
+          }
+        },
+        {
+          "name": "Get Unlocked Endings",
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
+            "url": {
+              "raw": "http://localhost:5000/api/games/story/{{storyId}}/endings",
+              "protocol": "http",
+              "host": ["localhost"],
+              "port": "5000",
+              "path": ["api", "games", "story", "{{storyId}}", "endings"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Ratings",
+      "item": [
+        {
+          "name": "Create Rating",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"storyId\": \"{{storyId}}\",\n  \"rating\": 5,\n  \"comment\": \"Excellente histoire ! J'ai adoré les choix avec dés.\"\n}"
+            },
+            "url": {
+              "raw": "http://localhost:5000/api/ratings",
+              "protocol": "http",
+              "host": ["localhost"],
+              "port": "5000",
+              "path": ["api", "ratings"]
+            }
+          }
+        },
+        {
+          "name": "Get Story Ratings",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "http://localhost:5000/api/ratings/story/{{storyId}}?page=1&limit=10",
+              "protocol": "http",
+              "host": ["localhost"],
+              "port": "5000",
+              "path": ["api", "ratings", "story", "{{storyId}}"],
+              "query": [
+                { "key": "page", "value": "1" },
+                { "key": "limit", "value": "10" }
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Statistics",
+      "item": [
+        {
+          "name": "Get Story Statistics",
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
+            "url": {
+              "raw": "http://localhost:5000/api/statistics/story/{{storyId}}",
+              "protocol": "http",
+              "host": ["localhost"],
+              "port": "5000",
+              "path": ["api", "statistics", "story", "{{storyId}}"]
+            }
+          }
+        },
+        {
+          "name": "Get Author Statistics",
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
+            "url": {
+              "raw": "http://localhost:5000/api/statistics/author/{{authorId}}",
+              "protocol": "http",
+              "host": ["localhost"],
+              "port": "5000",
+              "path": ["api", "statistics", "author", "{{authorId}}"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Admin",
+      "item": [
+        {
+          "name": "Get All Users",
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
+            "url": {
+              "raw": "http://localhost:5000/api/admin/users?page=1&role=author",
+              "protocol": "http",
+              "host": ["localhost"],
+              "port": "5000",
+              "path": ["api", "admin", "users"],
+              "query": [
+                { "key": "page", "value": "1" },
+                { "key": "role", "value": "author" }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Ban User",
+          "request": {
+            "method": "PUT",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"reason\": \"Violation des règles de la communauté\"\n}"
+            },
+            "url": {
+              "raw": "http://localhost:5000/api/admin/users/{{userId}}/ban",
+              "protocol": "http",
+              "host": ["localhost"],
+              "port": "5000",
+              "path": ["api", "admin", "users", "{{userId}}", "ban"]
+            }
+          }
+        },
+        {
+          "name": "Suspend Story",
+          "request": {
+            "method": "PUT",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"reason\": \"Contenu inapproprié\"\n}"
+            },
+            "url": {
+              "raw": "http://localhost:5000/api/admin/stories/{{storyId}}/suspend",
+              "protocol": "http",
+              "host": ["localhost"],
+              "port": "5000",
+              "path": ["api", "admin", "stories", "{{storyId}}", "suspend"]
+            }
+          }
+        },
+        {
+          "name": "Get Dashboard",
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
+            "url": {
+              "raw": "http://localhost:5000/api/admin/dashboard",
+              "protocol": "http",
+              "host": ["localhost"],
+              "port": "5000",
+              "path": ["api", "admin", "dashboard"]
+            }
+          }
+        }
+      ]
+    }
+  ],
+  "variable": [
+    { "key": "token", "value": "", "type": "string" },
+    { "key": "storyId", "value": "", "type": "string" },
+    { "key": "pageId", "value": "", "type": "string" },
+    { "key": "choiceId", "value": "", "type": "string" },
+    { "key": "gameId", "value": "", "type": "string" },
+    { "key": "targetPageId", "value": "", "type": "string" },
+    { "key": "userId", "value": "", "type": "string" },
+    { "key": "authorId", "value": "", "type": "string" }
+  ]
+}

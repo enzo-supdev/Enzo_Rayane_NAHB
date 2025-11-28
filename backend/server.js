@@ -6,9 +6,14 @@ import morgan from 'morgan';
 import dotenv from 'dotenv';
 import { fileURLToPath } from 'url';
 import { dirname, join } from 'path';
+import swaggerUi from 'swagger-ui-express';
+import { readFileSync } from 'fs';
 
 // Load environment variables
 dotenv.config();
+
+// Load Swagger documentation
+const swaggerDoc = JSON.parse(readFileSync('./swagger.json', 'utf8'));
 
 // Import routes
 import authRoutes from './routes/auth.routes.js';
@@ -65,6 +70,15 @@ app.use('/uploads', express.static(join(__dirname, 'uploads')));
 // Health check
 app.get('/api/health', (req, res) => {
   res.json({ status: 'OK', timestamp: new Date().toISOString() });
+});
+
+// Swagger documentation
+app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerDoc));
+
+// Serve swagger.json file
+app.get('/swagger.json', (req, res) => {
+  res.setHeader('Content-Type', 'application/json');
+  res.send(swaggerDoc);
 });
 
 // API Routes
